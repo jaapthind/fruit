@@ -3,43 +3,69 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-<title>3D PROCEDURAL FRUIT DESTRUCTOR ENGINE</title>
+<title>3D PROCEDURAL FRUIT DESTRUCTOR - REALITY ENGINE</title>
 <style>
     :root {
-        --bg: #050508;
-        --ui-bg: rgba(10, 15, 20, 0.8);
-        --ui-border: rgba(255, 255, 255, 0.1);
-        --text: #e0e0f0;
-        --accent: #ff0044;
-        --accent-glow: rgba(255, 0, 68, 0.5);
+        --bg: #020203; --ui-bg: rgba(5, 8, 12, 0.85); --ui-border: rgba(255, 255, 255, 0.08);
+        --text: #e0e0f0; --accent: #ff0044; --accent-glow: rgba(255, 0, 68, 0.6);
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-drag: none; }
     body {
         width: 100vw; height: 100vh; overflow: hidden; background: var(--bg);
+        background-image: radial-gradient(circle at 50% 50%, #080810 0%, var(--bg) 100%);
         font-family: 'Courier New', Courier, monospace; color: var(--text);
     }
     #webgl-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
-    #ui-layer { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
-    #toolbar { display: flex; justify-content: center; gap: 8px; padding: 15px; background: linear-gradient(180deg, rgba(0,0,0,0.9), transparent); pointer-events: auto; flex-wrap: wrap; }
-    .btn { background: var(--ui-bg); border: 1px solid var(--ui-border); color: #888; padding: 10px 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; font-size: 11px; cursor: pointer; transition: 0.3s; border-radius: 4px; backdrop-filter: blur(5px); }
-    .btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
-    .btn.active { color: #fff; border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
-    #hud { padding: 30px; display: flex; justify-content: center; background: linear-gradient(0deg, rgba(0,0,0,0.9), transparent); pointer-events: auto; }
-    .panel { background: var(--ui-bg); border: 1px solid var(--ui-border); padding: 20px 40px; border-radius: 8px; backdrop-filter: blur(10px); display: flex; align-items: center; gap: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+    
+    /* 5-SECOND INTRO SCREEN */
+    #intro {
+        position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: #000;
+        z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column;
+        transition: opacity 0.5s ease-out, filter 0.5s;
+    }
+    .intro-title {
+        font-size: 5vw; font-weight: 900; letter-spacing: 15px; color: #fff; text-transform: uppercase;
+        animation: glitch 0.2s linear infinite, pulseTitle 2s ease-in-out infinite alternate;
+        text-shadow: 2px 0 #00ffcc, -2px 0 #ff0044;
+    }
+    .intro-sub { margin-top: 20px; font-size: 14px; color: #888; letter-spacing: 5px; animation: blink 1s infinite; }
+    .load-bar { width: 300px; height: 4px; background: #222; margin-top: 30px; position: relative; overflow: hidden; }
+    .load-fill { position: absolute; top:0; left:0; height: 100%; width: 0%; background: #fff; box-shadow: 0 0 15px #fff; animation: loadAnim 4.5s cubic-bezier(0.8, 0, 0.2, 1) forwards; }
+    
+    @keyframes pulseTitle { 0% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(255,0,68,0.5)); } 100% { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(0,255,204,0.8)); } }
+    @keyframes glitch { 0% { transform: translate(0) } 20% { transform: translate(-2px, 1px) } 40% { transform: translate(-1px, -1px) } 60% { transform: translate(2px, 1px) } 80% { transform: translate(1px, -1px) } 100% { transform: translate(0) } }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    @keyframes loadAnim { 0% { width: 0%; } 20% { width: 30%; } 50% { width: 45%; } 80% { width: 80%; } 100% { width: 100%; } }
+
+    /* UI LAYER */
+    #ui-layer { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; opacity: 0; transition: opacity 1s; }
+    #toolbar { display: flex; justify-content: center; gap: 10px; padding: 20px; background: linear-gradient(180deg, rgba(0,0,0,0.95), transparent); pointer-events: auto; flex-wrap: wrap; }
+    .btn { background: var(--ui-bg); border: 1px solid var(--ui-border); color: #777; padding: 12px 24px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; font-size: 12px; cursor: pointer; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 4px; backdrop-filter: blur(8px); }
+    .btn:hover { color: #fff; background: rgba(255,255,255,0.05); transform: translateY(-2px); }
+    .btn.active { color: #fff; border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow), inset 0 0 10px var(--accent-glow); text-shadow: 0 0 5px #fff; }
+    #hud { padding: 40px; display: flex; justify-content: center; background: linear-gradient(0deg, rgba(0,0,0,0.95), transparent); pointer-events: auto; }
+    .panel { background: var(--ui-bg); border: 1px solid var(--ui-border); padding: 25px 50px; border-radius: 12px; backdrop-filter: blur(12px); display: flex; align-items: center; gap: 50px; box-shadow: 0 30px 60px rgba(0,0,0,0.9); position: relative; overflow: hidden; }
+    .panel::after { content:''; position: absolute; top:0; left:0; right:0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.5; transition: background 0.3s; }
     .stat { display: flex; flex-direction: column; }
-    .stat-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-    .stat-val { font-size: 28px; font-weight: bold; color: var(--accent); }
-    #prog-bg { width: 250px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 10px; overflow: hidden; }
-    #prog-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00ffcc, #ffff00, #ff0044); transition: width 0.1s; }
+    .stat-label { font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+    .stat-val { font-size: 32px; font-weight: 900; color: var(--accent); text-shadow: 0 0 10px var(--accent-glow); transition: color 0.3s; }
+    #prog-bg { width: 280px; height: 8px; background: rgba(0,0,0,0.8); border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); margin-top: 12px; overflow: hidden; }
+    #prog-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00ffcc, #ffff00, #ff0044); background-size: 300% 100%; transition: width 0.1s cubic-bezier(0.1, 0.7, 0.1, 1); box-shadow: 0 0 10px rgba(255,0,68,0.8); }
     #flash { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: #fff; opacity: 0; pointer-events: none; z-index: 100; transition: opacity 0.1s; }
-    #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; pointer-events: none; z-index: 5; opacity: 0.5; }
-    #crosshair::before, #crosshair::after { content: ''; position: absolute; background: rgba(255,255,255,0.5); }
-    #crosshair::before { top: 9px; left: 0; width: 20px; height: 2px; }
-    #crosshair::after { top: 0; left: 9px; width: 2px; height: 20px; }
+    #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 24px; height: 24px; pointer-events: none; z-index: 5; opacity: 0; transition: opacity 1s; mix-blend-mode: exclusion; }
+    #crosshair::before, #crosshair::after { content: ''; position: absolute; background: #fff; }
+    #crosshair::before { top: 11px; left: 0; width: 24px; height: 2px; }
+    #crosshair::after { top: 0; left: 11px; width: 2px; height: 24px; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
+
+<div id="intro">
+    <div class="intro-title">DESTRUCTOR</div>
+    <div class="intro-sub">CALIBRATING 3D PHYSICS ENGINE</div>
+    <div class="load-bar"><div class="load-fill"></div></div>
+</div>
 
 <div id="flash"></div>
 <div id="webgl-container"></div>
@@ -71,475 +97,360 @@
 
 <script>
 /** ---------------------------------------------------------------------------
- * INLINE SIMPLEX NOISE IMPLEMENTATION (For Procedural Textures & Geometry)
+ * 1. SIMPLEX NOISE ALGORITHM (MINIFIED)
  * --------------------------------------------------------------------------- */
-const F3 = 1.0 / 3.0, G3 = 1.0 / 6.0;
-class SimplexNoise {
-    constructor(random = Math.random) {
-        this.p = new Uint8Array(256);
-        this.perm = new Uint8Array(512);
-        this.permMod12 = new Uint8Array(512);
-        for (let i = 0; i < 256; i++) this.p[i] = Math.floor(random() * 256);
-        for (let i = 0; i < 512; i++) {
-            this.perm[i] = this.p[i & 255];
-            this.permMod12[i] = (this.perm[i] % 12);
-        }
-    }
-    noise3D(xin, yin, zin) {
-        const permMod12 = this.permMod12, perm = this.perm;
-        let n0, n1, n2, n3;
-        const s = (xin + yin + zin) * F3;
-        const i = Math.floor(xin + s), j = Math.floor(yin + s), k = Math.floor(zin + s);
-        const t = (i + j + k) * G3;
-        const X0 = i - t, Y0 = j - t, Z0 = k - t;
-        const x0 = xin - X0, y0 = yin - Y0, z0 = zin - Z0;
-        let i1, j1, k1, i2, j2, k2;
-        if (x0 >= y0) {
-            if (y0 >= z0) { i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 1; k2 = 0; }
-            else if (x0 >= z0) { i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 0; k2 = 1; }
-            else { i1 = 0; j1 = 0; k1 = 1; i2 = 1; j2 = 0; k2 = 1; }
-        } else {
-            if (y0 < z0) { i1 = 0; j1 = 0; k1 = 1; i2 = 0; j2 = 1; k2 = 1; }
-            else if (x0 < z0) { i1 = 0; j1 = 1; k1 = 0; i2 = 0; j2 = 1; k2 = 1; }
-            else { i1 = 0; j1 = 1; k1 = 0; i2 = 1; j2 = 1; k2 = 0; }
-        }
-        const x1 = x0 - i1 + G3, y1 = y0 - j1 + G3, z1 = z0 - k1 + G3;
-        const x2 = x0 - i2 + 2.0 * G3, y2 = y0 - j2 + 2.0 * G3, z2 = z0 - k2 + 2.0 * G3;
-        const x3 = x0 - 1.0 + 3.0 * G3, y3 = y0 - 1.0 + 3.0 * G3, z3 = z0 - 1.0 + 3.0 * G3;
-        const ii = i & 255, jj = j & 255, kk = k & 255;
-        let t0 = 0.6 - x0 * x0 - y0 * y0 - z0 * z0;
-        if (t0 < 0) n0 = 0.0; else {
-            const gi0 = permMod12[ii + perm[jj + perm[kk]]] * 3;
-            t0 *= t0; n0 = t0 * t0 * (this.grad3[gi0] * x0 + this.grad3[gi0 + 1] * y0 + this.grad3[gi0 + 2] * z0);
-        }
-        let t1 = 0.6 - x1 * x1 - y1 * y1 - z1 * z1;
-        if (t1 < 0) n1 = 0.0; else {
-            const gi1 = permMod12[ii + i1 + perm[jj + j1 + perm[kk + k1]]] * 3;
-            t1 *= t1; n1 = t1 * t1 * (this.grad3[gi1] * x1 + this.grad3[gi1 + 1] * y1 + this.grad3[gi1 + 2] * z1);
-        }
-        let t2 = 0.6 - x2 * x2 - y2 * y2 - z2 * z2;
-        if (t2 < 0) n2 = 0.0; else {
-            const gi2 = permMod12[ii + i2 + perm[jj + j2 + perm[kk + k2]]] * 3;
-            t2 *= t2; n2 = t2 * t2 * (this.grad3[gi2] * x2 + this.grad3[gi2 + 1] * y2 + this.grad3[gi2 + 2] * z2);
-        }
-        let t3 = 0.6 - x3 * x3 - y3 * y3 - z3 * z3;
-        if (t3 < 0) n3 = 0.0; else {
-            const gi3 = permMod12[ii + 1 + perm[jj + 1 + perm[kk + 1]]] * 3;
-            t3 *= t3; n3 = t3 * t3 * (this.grad3[gi3] * x3 + this.grad3[gi3 + 1] * y3 + this.grad3[gi3 + 2] * z3);
-        }
-        return 32.0 * (n0 + n1 + n2 + n3);
-    }
-}
-SimplexNoise.prototype.grad3 = new Float32Array([1,1,0, -1,1,0, 1,-1,0, -1,-1,0, 1,0,1, -1,0,1, 1,0,-1, -1,0,-1, 0,1,1, 0,-1,1, 0,1,-1, 0,-1,-1]);
-const simplex = new SimplexNoise();
+const F3=1.0/3.0,G3=1.0/6.0;class SimplexNoise{constructor(r=Math.random){this.p=new Uint8Array(256);this.perm=new Uint8Array(512);this.permMod12=new Uint8Array(512);for(let i=0;i<256;i++)this.p[i]=Math.floor(r()*256);for(let i=0;i<512;i++){this.perm[i]=this.p[i&255];this.permMod12[i]=this.perm[i]%12;}}noise3D(x,y,z){let n0,n1,n2,n3;const s=(x+y+z)*F3,i=Math.floor(x+s),j=Math.floor(y+s),k=Math.floor(z+s);const t=(i+j+k)*G3,X0=i-t,Y0=j-t,Z0=k-t,x0=x-X0,y0=y-Y0,z0=z-Z0;let i1,j1,k1,i2,j2,k2;if(x0>=y0){if(y0>=z0){i1=1;j1=0;k1=0;i2=1;j2=1;k2=0;}else if(x0>=z0){i1=1;j1=0;k1=0;i2=1;j2=0;k2=1;}else{i1=0;j1=0;k1=1;i2=1;j2=0;k2=1;}}else{if(y0<z0){i1=0;j1=0;k1=1;i2=0;j2=1;k2=1;}else if(x0<z0){i1=0;j1=1;k1=0;i2=0;j2=1;k2=1;}else{i1=0;j1=1;k1=0;i2=1;j2=1;k2=0;}}const x1=x0-i1+G3,y1=y0-j1+G3,z1=z0-k1+G3,x2=x0-i2+2.0*G3,y2=y0-j2+2.0*G3,z2=z0-k2+2.0*G3,x3=x0-1.0+3.0*G3,y3=y0-1.0+3.0*G3,z3=z0-1.0+3.0*G3;const ii=i&255,jj=j&255,kk=k&255;let t0=0.6-x0*x0-y0*y0-z0*z0;if(t0<0)n0=0.0;else{const gi0=this.permMod12[ii+this.perm[jj+this.perm[kk]]]*3;t0*=t0;n0=t0*t0*(this.grad3[gi0]*x0+this.grad3[gi0+1]*y0+this.grad3[gi0+2]*z0);}let t1=0.6-x1*x1-y1*y1-z1*z1;if(t1<0)n1=0.0;else{const gi1=this.permMod12[ii+i1+this.perm[jj+j1+this.perm[kk+k1]]]*3;t1*=t1;n1=t1*t1*(this.grad3[gi1]*x1+this.grad3[gi1+1]*y1+this.grad3[gi1+2]*z1);}let t2=0.6-x2*x2-y2*y2-z2*z2;if(t2<0)n2=0.0;else{const gi2=this.permMod12[ii+i2+this.perm[jj+j2+this.perm[kk+k2]]]*3;t2*=t2;n2=t2*t2*(this.grad3[gi2]*x2+this.grad3[gi2+1]*y2+this.grad3[gi2+2]*z2);}let t3=0.6-x3*x3-y3*y3-z3*z3;if(t3<0)n3=0.0;else{const gi3=this.permMod12[ii+1+this.perm[jj+1+this.perm[kk+1]]]*3;t3*=t3;n3=t3*t3*(this.grad3[gi3]*x3+this.grad3[gi3+1]*y3+this.grad3[gi3+2]*z3);}return 32.0*(n0+n1+n2+n3);}}SimplexNoise.prototype.grad3=new Float32Array([1,1,0,-1,1,0,1,-1,0,-1,-1,0,1,0,1,-1,0,1,1,0,-1,-1,0,-1,0,1,1,0,-1,1,0,1,-1,0,-1,-1]);const simplex=new SimplexNoise();
 
 /** ---------------------------------------------------------------------------
- * AUDIO SYNTHESIS ENGINE
+ * 2. AUDIO ENGINE
  * --------------------------------------------------------------------------- */
 class AudioEngine {
     constructor() {
         this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        this.master = this.ctx.createGain();
-        this.master.gain.value = 0.6;
+        this.master = this.ctx.createGain(); this.master.gain.value = 0.8;
         this.master.connect(this.ctx.destination);
     }
-    resume() { if (this.ctx.state === 'suspended') this.ctx.resume(); }
-    playHit(intensity, density) {
+    resume() { if(this.ctx.state === 'suspended') this.ctx.resume(); }
+    playHit(stage, density) {
         this.resume(); const t = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(150 * density - (intensity*1.5), t);
-        osc.frequency.exponentialRampToValueAtTime(10, t + 0.15);
-        gain.gain.setValueAtTime(0.8, t);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
-        osc.connect(gain); gain.connect(this.master);
-        osc.start(t); osc.stop(t + 0.15);
+        const osc = this.ctx.createOscillator(); const g = this.ctx.createGain();
+        osc.type = 'square'; osc.frequency.setValueAtTime(100*density-(stage), t);
+        osc.frequency.exponentialRampToValueAtTime(10, t+0.1);
+        g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.01, t+0.1);
+        osc.connect(g); g.connect(this.master); osc.start(t); osc.stop(t+0.1);
 
-        if (intensity > 10) {
-            const bSize = this.ctx.sampleRate * 0.1;
-            const buf = this.ctx.createBuffer(1, bSize, this.ctx.sampleRate);
-            const data = buf.getChannelData(0);
-            for(let i=0; i<bSize; i++) data[i] = Math.random()*2-1;
-            const noise = this.ctx.createBufferSource();
-            noise.buffer = buf;
-            const filter = this.ctx.createBiquadFilter();
-            filter.type = 'highpass'; filter.frequency.value = 500 + (intensity*20);
-            const ngain = this.ctx.createGain();
-            ngain.gain.setValueAtTime((intensity/50)*0.5, t);
-            ngain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-            noise.connect(filter); filter.connect(ngain); ngain.connect(this.master);
-            noise.start(t);
+        if(stage > 5) {
+            const bSize = this.ctx.sampleRate*0.1; const buf = this.ctx.createBuffer(1, bSize, this.ctx.sampleRate);
+            const data = buf.getChannelData(0); for(let i=0; i<bSize; i++) data[i] = Math.random()*2-1;
+            const noise = this.ctx.createBufferSource(); noise.buffer = buf;
+            const filter = this.ctx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 800+(stage*15);
+            const ng = this.ctx.createGain(); ng.gain.setValueAtTime((stage/50)*0.7, t); ng.gain.exponentialRampToValueAtTime(0.01, t+0.1);
+            noise.connect(filter); filter.connect(ng); ng.connect(this.master); noise.start(t);
         }
     }
     playExplode() {
         this.resume(); const t = this.ctx.currentTime;
-        const bSize = this.ctx.sampleRate * 2;
-        const buf = this.ctx.createBuffer(1, bSize, this.ctx.sampleRate);
-        const data = buf.getChannelData(0);
-        for(let i=0; i<bSize; i++) data[i] = Math.random()*2-1;
+        const bSize = this.ctx.sampleRate*2.5; const buf = this.ctx.createBuffer(1, bSize, this.ctx.sampleRate);
+        const data = buf.getChannelData(0); for(let i=0; i<bSize; i++) data[i] = Math.random()*2-1;
         const noise = this.ctx.createBufferSource(); noise.buffer = buf;
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'lowpass'; filter.frequency.setValueAtTime(2000, t);
-        filter.frequency.exponentialRampToValueAtTime(40, t + 1.5);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(1.5, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 2);
-        noise.connect(filter); filter.connect(gain); gain.connect(this.master);
-        noise.start(t);
+        const filter = this.ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.setValueAtTime(1200, t);
+        filter.frequency.exponentialRampToValueAtTime(20, t+2.0);
+        const g = this.ctx.createGain(); g.gain.setValueAtTime(2.0, t); g.gain.exponentialRampToValueAtTime(0.01, t+2.5);
+        noise.connect(filter); filter.connect(g); g.connect(this.master); noise.start(t);
     }
 }
 const audio = new AudioEngine();
 
 /** ---------------------------------------------------------------------------
- * PROCEDURAL TEXTURE & MESH GENERATOR (EXTREME DETAIL)
+ * 3. FRUIT METADATA & PROCEDURAL TEXTURES
  * --------------------------------------------------------------------------- */
 const FRUIT_DATA = {
-    watermelon: { colorIn: 0xff1133, colorOut: 0x1f5027, density: 1.2, rMod: 0.1, mRough: 0.2, mMetal: 0.0 },
-    apple: { colorIn: 0xfdfcdc, colorOut: 0xba181b, density: 1.5, rMod: 0.3, mRough: 0.1, mMetal: 0.1 },
-    orange: { colorIn: 0xff9f1c, colorOut: 0xffba08, density: 0.9, rMod: 0.8, mRough: 0.6, mMetal: 0.0 },
-    coconut: { colorIn: 0xffffff, colorOut: 0x3b2512, density: 3.0, rMod: 0.9, mRough: 0.9, mMetal: 0.0 },
-    pumpkin: { colorIn: 0xff9d00, colorOut: 0xd64900, density: 1.1, rMod: 0.6, mRough: 0.7, mMetal: 0.0 }
+    watermelon: { cIn: 0xff1133, cOut: 0x1f5027, dens: 1.2, rMod: 0.1, rough: 0.2, metal: 0.0, juice: true },
+    apple:      { cIn: 0xfdfcdc, cOut: 0xba181b, dens: 1.5, rMod: 0.3, rough: 0.1, metal: 0.1, juice: true },
+    orange:     { cIn: 0xff9f1c, cOut: 0xffba08, dens: 0.9, rMod: 0.8, rough: 0.6, metal: 0.0, juice: true },
+    coconut:    { cIn: 0xffffff, cOut: 0x3b2512, dens: 3.0, rMod: 0.9, rough: 0.9, metal: 0.0, juice: false },
+    pumpkin:    { cIn: 0xff9d00, cOut: 0xd64900, dens: 1.1, rMod: 0.6, rough: 0.7, metal: 0.0, juice: false }
 };
 
 class ProceduralFruit {
     constructor(type) {
-        this.type = type;
-        this.data = FRUIT_DATA[type];
-        this.texSize = 1024;
+        this.type = type; this.data = FRUIT_DATA[type]; this.tSize = 1024;
+        this.cA = document.createElement('canvas'); this.cA.width = this.cA.height = this.tSize; this.ctxA = this.cA.getContext('2d', {alpha:false});
+        this.cB = document.createElement('canvas'); this.cB.width = this.cB.height = this.tSize; this.ctxB = this.cB.getContext('2d', {alpha:false});
+        this.cD = document.createElement('canvas'); this.cD.width = this.cD.height = this.tSize; this.ctxD = this.cD.getContext('2d', {alpha:true});
         
-        this.canvasAlbedo = document.createElement('canvas');
-        this.canvasAlbedo.width = this.texSize; this.canvasAlbedo.height = this.texSize;
-        this.ctxAlbedo = this.canvasAlbedo.getContext('2d', {alpha: false});
+        this.texA = new THREE.CanvasTexture(this.cA); this.texA.anisotropy = 16;
+        this.texB = new THREE.CanvasTexture(this.cB); this.texB.anisotropy = 16;
+        this.texD = new THREE.CanvasTexture(this.cD);
         
-        this.canvasBump = document.createElement('canvas');
-        this.canvasBump.width = this.texSize; this.canvasBump.height = this.texSize;
-        this.ctxBump = this.canvasBump.getContext('2d', {alpha: false});
-
-        this.canvasDamage = document.createElement('canvas');
-        this.canvasDamage.width = this.texSize; this.canvasDamage.height = this.texSize;
-        this.ctxDamage = this.canvasDamage.getContext('2d', {alpha: true});
-
-        this.texAlbedo = new THREE.CanvasTexture(this.canvasAlbedo);
-        this.texBump = new THREE.CanvasTexture(this.canvasBump);
-        this.texDamage = new THREE.CanvasTexture(this.canvasDamage);
+        this.genTextures();
+        this.geo = new THREE.SphereGeometry(2.5, 128, 128);
+        this.genGeometry(this.geo, false);
         
-        this.texAlbedo.anisotropy = 16;
-        this.texBump.anisotropy = 16;
-
-        this.generateBaseTextures();
-        this.geometry = this.generateGeometry();
-        
-        // Custom Shader Material using onBeforeCompile to inject dynamic canvas damage
-        this.material = new THREE.MeshStandardMaterial({
-            map: this.texAlbedo,
-            bumpMap: this.texBump,
-            bumpScale: 0.05,
-            roughness: this.data.mRough,
-            metalness: this.data.mMetal,
-            color: 0xffffff
+        this.mat = new THREE.MeshStandardMaterial({
+            map: this.texA, bumpMap: this.texB, bumpScale: 0.05,
+            roughness: this.data.rough, metalness: this.data.metal,
+            color: 0xffffff, side: THREE.DoubleSide
         });
 
-        this.material.onBeforeCompile = (shader) => {
-            shader.uniforms.damageMap = { value: this.texDamage };
-            shader.uniforms.colorIn = { value: new THREE.Color(this.data.colorIn) };
-            shader.fragmentShader = `
-                uniform sampler2D damageMap;
-                uniform vec3 colorIn;
-                ${shader.fragmentShader}
-            `.replace(
-                `#include <map_fragment>`,
-                `
+        this.mat.onBeforeCompile = (sh) => {
+            sh.uniforms.dmgMap = { value: this.texD };
+            sh.uniforms.cIn = { value: new THREE.Color(this.data.cIn) };
+            sh.fragmentShader = `
+                uniform sampler2D dmgMap;
+                uniform vec3 cIn;
+                ${sh.fragmentShader}
+            `.replace(`#include <map_fragment>`, `
                 #include <map_fragment>
-                vec4 dmg = texture2D(damageMap, vUv);
+                vec4 dmg = texture2D(dmgMap, vUv);
                 
-                // dmg.r = deep crater (black)
-                // dmg.g = flesh exposure (colorIn)
-                // dmg.b = structural crack (dark)
+                // Outer shell damage
+                if(dmg.g > 0.0) diffuseColor.rgb = mix(diffuseColor.rgb, cIn, dmg.g);
+                if(dmg.b > 0.0) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.0), dmg.b * 0.8);
+                if(dmg.r > 0.0) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.05), dmg.r);
                 
-                if(dmg.g > 0.0) {
-                    diffuseColor.rgb = mix(diffuseColor.rgb, colorIn, dmg.g);
+                // Core revealing (Inside geometry coloring)
+                if (!gl_FrontFacing) {
+                    diffuseColor.rgb = cIn * 0.7; // Darker inner flesh for depth
+                    
+                    // Add procedural cellular noise to inner flesh
+                    float n = fract(sin(dot(vUv.xy ,vec2(12.9898,78.233))) * 43758.5453);
+                    diffuseColor.rgb += vec3(n * 0.1); 
                 }
-                if(dmg.b > 0.0) {
-                    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.0), dmg.b * 0.8);
-                }
-                if(dmg.r > 0.0) {
-                    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.05), dmg.r);
-                }
-                `
-            );
+            `);
         };
-
-        this.mesh = new THREE.Mesh(this.geometry, this.material);
-        this.mesh.castShadow = true;
-        this.mesh.receiveShadow = true;
+        this.mesh = new THREE.Mesh(this.geo, this.mat);
+        this.mesh.castShadow = true; this.mesh.receiveShadow = true;
     }
 
-    generateBaseTextures() {
-        const dA = this.ctxAlbedo.createImageData(this.texSize, this.texSize);
-        const dB = this.ctxBump.createImageData(this.texSize, this.texSize);
-        
-        const cOut = new THREE.Color(this.data.colorOut);
-        
-        for(let y=0; y<this.texSize; y++) {
-            for(let x=0; x<this.texSize; x++) {
-                const i = (y * this.texSize + x) * 4;
-                const u = x / this.texSize;
-                const v = y / this.texSize;
-                
-                // Map UV to Sphere coords for continuous noise
-                const theta = u * Math.PI * 2;
-                const phi = v * Math.PI;
-                const nx = Math.sin(phi) * Math.cos(theta);
-                const ny = Math.sin(phi) * Math.sin(theta);
-                const nz = Math.cos(phi);
+    genTextures() {
+        const dA = this.ctxA.createImageData(this.tSize, this.tSize), dB = this.ctxB.createImageData(this.tSize, this.tSize);
+        const baseC = new THREE.Color(this.data.cOut);
+        for(let y=0; y<this.tSize; y++) {
+            for(let x=0; x<this.tSize; x++) {
+                const i = (y*this.tSize+x)*4, u = x/this.tSize, v = y/this.tSize;
+                const theta = u*Math.PI*2, phi = v*Math.PI;
+                const nx = Math.sin(phi)*Math.cos(theta), ny = Math.sin(phi)*Math.sin(theta), nz = Math.cos(phi);
+                let r=baseC.r*255, g=baseC.g*255, b=baseC.b*255, bump=128;
 
-                let r=cOut.r*255, g=cOut.g*255, b=cOut.b*255;
-                let bump = 128;
-
-                if (this.type === 'watermelon') {
-                    const n1 = simplex.noise3D(nx*2, ny*2, nz*2);
-                    const n2 = simplex.noise3D(nx*10, ny*10, nz*10);
-                    const stripe = Math.sin(theta * 12 + n1 * 2);
-                    if (stripe > 0.3 + (n2*0.2)) {
-                        r*=0.4; g*=0.5; b*=0.4; // Dark green stripes
-                    }
-                    bump = 128 + (n2 * 10);
-                } 
-                else if (this.type === 'apple') {
-                    const n1 = simplex.noise3D(nx*5, ny*20, nz*5); // Vertical streaks
-                    const n2 = simplex.noise3D(nx*50, ny*50, nz*50); // Spots
-                    r = Math.min(255, r + n1*40);
-                    g = Math.min(255, g + n1*20);
-                    if(n2 > 0.7) { r=255; g=255; b=200; } // Yellowish lenticels
-                    bump = 128 + (n2 * 5);
+                if(this.type === 'watermelon') {
+                    const n1 = simplex.noise3D(nx*2, ny*2, nz*2), n2 = simplex.noise3D(nx*10, ny*10, nz*10);
+                    if(Math.sin(theta*12 + n1*2) > 0.3+(n2*0.2)) { r*=0.4; g*=0.5; b*=0.4; }
+                    bump = 128 + (n2*10);
+                } else if(this.type === 'apple') {
+                    const n1 = simplex.noise3D(nx*5, ny*20, nz*5), n2 = simplex.noise3D(nx*50, ny*50, nz*50);
+                    r = Math.min(255, r+n1*40); g = Math.min(255, g+n1*20);
+                    if(n2>0.7) { r=255; g=255; b=200; }
+                    bump = 128 + (n2*5);
+                } else if(this.type === 'orange') {
+                    const n1 = simplex.noise3D(nx*40, ny*40, nz*40); r+=n1*10; g+=n1*10; bump = 128 + (n1*80);
+                } else if(this.type === 'coconut') {
+                    const n1 = simplex.noise3D(nx*3, ny*30, nz*3); r+=n1*30; g+=n1*20; b+=n1*10; bump = 128 + (n1*60);
+                } else if(this.type === 'pumpkin') {
+                    const rib = Math.cos(theta*10), n1 = simplex.noise3D(nx*10, ny*10, nz*10);
+                    if(rib>0.8) { r*=0.7; g*=0.7; } r+=n1*15; g+=n1*10; bump = 128 - (rib*100) + (n1*10);
                 }
-                else if (this.type === 'orange') {
-                    const n1 = simplex.noise3D(nx*40, ny*40, nz*40);
-                    r += n1*10; g += n1*10;
-                    bump = 128 + (n1 * 80); // High frequency pore bump
-                }
-                else if (this.type === 'coconut') {
-                    const n1 = simplex.noise3D(nx*3, ny*30, nz*3); // Fibers
-                    r += n1*30; g += n1*20; b += n1*10;
-                    bump = 128 + (n1 * 60);
-                }
-                else if (this.type === 'pumpkin') {
-                    const rib = Math.cos(theta * 10);
-                    const n1 = simplex.noise3D(nx*10, ny*10, nz*10);
-                    if(rib > 0.8) { r*=0.7; g*=0.7; } // Crease shadows
-                    r += n1*15; g += n1*10;
-                    bump = 128 - (rib * 100) + (n1*10); // Deep ribs
-                }
-
-                dA.data[i] = r; dA.data[i+1] = g; dA.data[i+2] = b; dA.data[i+3] = 255;
-                dB.data[i] = bump; dB.data[i+1] = bump; dB.data[i+2] = bump; dB.data[i+3] = 255;
+                dA.data[i]=r; dA.data[i+1]=g; dA.data[i+2]=b; dA.data[i+3]=255;
+                dB.data[i]=bump; dB.data[i+1]=bump; dB.data[i+2]=bump; dB.data[i+3]=255;
             }
         }
-        this.ctxAlbedo.putImageData(dA, 0, 0);
-        this.ctxBump.putImageData(dB, 0, 0);
-        this.ctxDamage.clearRect(0,0,this.texSize, this.texSize);
-        
-        this.texAlbedo.needsUpdate = true;
-        this.texBump.needsUpdate = true;
-        this.texDamage.needsUpdate = true;
+        this.ctxA.putImageData(dA, 0, 0); this.ctxB.putImageData(dB, 0, 0);
+        this.ctxD.clearRect(0,0,this.tSize,this.tSize);
+        this.texA.needsUpdate = true; this.texB.needsUpdate = true; this.texD.needsUpdate = true;
     }
 
-    generateGeometry() {
-        const geo = new THREE.SphereGeometry(2.5, 128, 128);
-        const pos = geo.attributes.position;
-        const uvs = geo.attributes.uv;
-        
+    genGeometry(geo, isChunk) {
+        const pos = geo.attributes.position, uvs = geo.attributes.uv;
         for(let i=0; i<pos.count; i++) {
-            let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-            const u = uvs.getX(i), v = uvs.getY(i);
+            let x=pos.getX(i), y=pos.getY(i), z=pos.getZ(i);
             let rad = Math.sqrt(x*x + y*y + z*z);
-            
-            if(this.type === 'watermelon') {
-                y *= 1.2; // Elongate
-            } else if(this.type === 'apple') {
-                if(y > 2.0) y -= (y-2.0)*2.0; // Top indent
-                if(y < -2.0) y += (-2.0-y)*1.5; // Bottom indent
-            } else if(this.type === 'pumpkin') {
-                if(y > 1.8) y -= (y-1.8)*1.5;
-                if(y < -1.8) y += (-1.8-y)*1.5;
-                const theta = u * Math.PI * 2;
-                const rib = Math.cos(theta * 10);
-                x += (x/rad) * rib * 0.2;
-                z += (z/rad) * rib * 0.2;
+            if(rad < 0.1) continue; 
+
+            // Calculate global UVs based on spherical mapping for chunks so textures align
+            const u = 0.5 + Math.atan2(z, x) / (2*Math.PI);
+            const v = 0.5 - Math.asin(y/rad) / Math.PI;
+            uvs.setXY(i, u, v);
+
+            if(this.type === 'watermelon') y*=1.2;
+            else if(this.type === 'apple') { if(y>2.0) y-=(y-2.0)*2.0; if(y<-2.0) y+=(-2.0-y)*1.5; }
+            else if(this.type === 'pumpkin') { 
+                if(y>1.8) y-=(y-1.8)*1.5; if(y<-1.8) y+=(-1.8-y)*1.5; 
+                const rib = Math.cos(u*Math.PI*20); x+=(x/rad)*rib*0.2; z+=(z/rad)*rib*0.2; 
             }
             
-            // Apply global procedural noise to geometry shape
             const n = simplex.noise3D(x, y, z) * 0.05 * this.data.rMod;
-            x += (x/rad) * n; y += (y/rad) * n; z += (z/rad) * n;
+            const jagged = isChunk ? (simplex.noise3D(x*15, y*15, z*15) * 0.15) : 0;
             
+            x+=(x/rad)*(n+jagged); y+=(y/rad)*(n+jagged); z+=(z/rad)*(n+jagged);
             pos.setXYZ(i, x, y, z);
         }
-        geo.computeVertexNormals();
-        return geo;
+        geo.computeVertexNormals(); return geo;
     }
 
     applyDamage(uv, stage) {
-        const cx = uv.x * this.texSize;
-        const cy = (1 - uv.y) * this.texSize; // ThreeJS UV y is inverted for canvas
+        const cx = uv.x * this.tSize, cy = (1-uv.y) * this.tSize;
+        const ctx = this.ctxD;
         
-        const ctx = this.ctxDamage;
-        
-        // Channel R = Deep Black Crater
-        // Channel G = ColorIn Flesh
-        // Channel B = Structural Dark Crack
-
-        // 1. Structural Cracks (B channel)
         ctx.beginPath();
         for(let i=0; i<3+(stage/10); i++) {
-            let px = cx, py = cy;
-            ctx.moveTo(px, py);
-            const angleBase = Math.random() * Math.PI * 2;
+            let px=cx, py=cy; ctx.moveTo(px,py); const aBase = Math.random()*Math.PI*2;
             for(let j=0; j<5+(stage/5); j++) {
-                const a = angleBase + (Math.random()-0.5);
-                const d = Math.random() * 20 * (1 + stage/10);
-                px += Math.cos(a)*d; py += Math.sin(a)*d;
-                ctx.lineTo(px, py);
+                const a = aBase + (Math.random()-0.5);
+                px += Math.cos(a)*Math.random()*25*(1+stage/10); py += Math.sin(a)*Math.random()*25*(1+stage/10);
+                ctx.lineTo(px,py);
             }
         }
-        ctx.lineWidth = 2 + (stage/5);
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'miter';
-        ctx.strokeStyle = `rgba(0,0,255, ${0.4 + stage/100})`;
-        ctx.stroke();
+        ctx.lineWidth = 3+(stage/5); ctx.lineCap = 'round'; ctx.lineJoin = 'miter';
+        ctx.strokeStyle = `rgba(0,0,255, ${0.4+stage/100})`; ctx.stroke();
 
-        // 2. Flesh Exposure (G channel)
-        if (stage > 10) {
+        if(stage > 10) {
             ctx.beginPath();
             for(let i=0; i<2+(stage/15); i++) {
-                let px = cx, py = cy;
-                ctx.moveTo(px, py);
-                const angleBase = Math.random() * Math.PI * 2;
-                for(let j=0; j<3+(stage/8); j++) {
-                    const a = angleBase + (Math.random()-0.5)*0.5;
-                    const d = Math.random() * 15 * (1 + stage/20);
-                    px += Math.cos(a)*d; py += Math.sin(a)*d;
-                    ctx.lineTo(px, py);
+                let px=cx, py=cy; ctx.moveTo(px,py); const aBase = Math.random()*Math.PI*2;
+                for(let j=0; j<4+(stage/8); j++) {
+                    const a = aBase + (Math.random()-0.5)*0.5;
+                    px += Math.cos(a)*Math.random()*20*(1+stage/20); py += Math.sin(a)*Math.random()*20*(1+stage/20);
+                    ctx.lineTo(px,py);
                 }
             }
-            ctx.lineWidth = 6 + (stage/4);
-            ctx.strokeStyle = `rgba(0,255,0, ${0.5 + stage/100})`;
-            ctx.stroke();
+            ctx.lineWidth = 8+(stage/4); ctx.strokeStyle = `rgba(0,255,0, ${0.5+stage/100})`; ctx.stroke();
         }
 
-        // 3. Deep Impact Crater (R channel)
-        ctx.beginPath();
-        ctx.arc(cx, cy, 5 + (stage/2), 0, Math.PI*2);
-        const radGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 10 + stage);
-        radGrad.addColorStop(0, 'rgba(255,0,0,1)');
-        radGrad.addColorStop(1, 'rgba(255,0,0,0)');
-        ctx.fillStyle = radGrad;
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, cy, 6+(stage/2), 0, Math.PI*2);
+        const rg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 12+stage);
+        rg.addColorStop(0, 'rgba(255,0,0,1)'); rg.addColorStop(1, 'rgba(255,0,0,0)');
+        ctx.fillStyle = rg; ctx.fill();
 
-        this.texDamage.needsUpdate = true;
+        this.texD.needsUpdate = true;
     }
 }
 
 /** ---------------------------------------------------------------------------
- * PARTICLE PHYSICS ENGINE (InstancedMesh)
+ * 4. FRACTURE CHUNK SYSTEM (THE SHELL BREAKING)
  * --------------------------------------------------------------------------- */
-class ParticleSystem {
+class ChunkSystem {
     constructor(scene) {
-        this.maxParticles = 5000;
-        this.geo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-        this.mat = new THREE.MeshStandardMaterial({ roughness: 0.8, metalness: 0.0 });
-        this.mesh = new THREE.InstancedMesh(this.geo, this.mat, this.maxParticles);
-        this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-        this.mesh.castShadow = true;
-        scene.add(this.mesh);
-        
-        this.dummy = new THREE.Object3D();
-        this.color = new THREE.Color();
-        this.particles = [];
-        this.pIndex = 0;
+        this.scene = scene;
+        this.chunks = [];
+    }
+    
+    build(fruit) {
+        this.chunks.forEach(c => {
+            c.mesh.geometry.dispose();
+            this.scene.remove(c.mesh);
+        });
+        this.chunks = [];
+
+        const r = 2.5, segs = 4, rings = 4; // 16 discrete physical chunks
+        for(let i=0; i<segs; i++) {
+            for(let j=0; j<rings; j++) {
+                const pS = (i/segs)*Math.PI*2, pL = (1/segs)*Math.PI*2;
+                const tS = (j/rings)*Math.PI, tL = (1/rings)*Math.PI;
+
+                const geo = new THREE.SphereGeometry(r, 24, 24, pS, pL, tS, tL);
+                fruit.genGeometry(geo, true); // True applies jagged edges
+                
+                geo.computeBoundingBox();
+                const center = new THREE.Vector3();
+                geo.boundingBox.getCenter(center);
+                geo.translate(-center.x, -center.y, -center.z);
+
+                const mesh = new THREE.Mesh(geo, fruit.mat);
+                mesh.castShadow = true; mesh.receiveShadow = true; mesh.visible = false;
+                this.scene.add(mesh);
+                
+                this.chunks.push({
+                    mesh: mesh, homeOffset: center,
+                    vel: new THREE.Vector3(), rot: new THREE.Vector3(), active: false
+                });
+            }
+        }
     }
 
-    emit(origin, normal, count, isExplosion, colorHex) {
-        this.color.setHex(colorHex);
-        for(let i=0; i<count; i++) {
-            const idx = this.pIndex % this.maxParticles;
+    explode(origin, baseRotation) {
+        this.chunks.forEach(c => {
+            c.mesh.visible = true; c.active = true;
             
-            // Randomize trajectory along normal or spherical if explosion
-            let dir = normal.clone();
-            if(isExplosion) {
-                dir.set(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
-            } else {
-                dir.x += (Math.random()-0.5)*2;
-                dir.y += (Math.random()-0.5)*2;
-                dir.z += (Math.random()-0.5)*2;
-                dir.normalize();
-            }
+            // Re-apply original offsets respecting base mesh rotation
+            const offset = c.homeOffset.clone().applyEuler(baseRotation);
+            c.mesh.position.copy(origin).add(offset);
+            c.mesh.rotation.copy(baseRotation);
             
-            const speed = (Math.random() * 5 + 2) * (isExplosion ? 3 : 1);
+            // Explosive physics
+            c.vel.copy(offset).normalize().multiplyScalar(Math.random()*15 + 10);
+            c.vel.y += Math.random()*15 + 8; // Vertical lift
             
-            this.particles[idx] = {
-                active: true,
-                pos: origin.clone(),
-                vel: dir.multiplyScalar(speed),
-                rot: new THREE.Vector3(Math.random(), Math.random(), Math.random()),
-                rotVel: new THREE.Vector3((Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5),
-                scale: (Math.random() * 0.5 + 0.5) * (isExplosion ? 2 : 1),
-                life: 1.0,
-                decay: (Math.random() * 0.02 + 0.01) / (isExplosion ? 0.5 : 1)
-            };
-            
-            this.mesh.setColorAt(idx, this.color);
-            this.pIndex++;
-        }
-        this.mesh.instanceColor.needsUpdate = true;
+            c.rot.set((Math.random()-0.5)*15, (Math.random()-0.5)*15, (Math.random()-0.5)*15);
+        });
     }
 
     update(dt) {
-        let needsUpdate = false;
-        for(let i=0; i<this.maxParticles; i++) {
-            const p = this.particles[i];
-            if(p && p.active) {
-                p.vel.y -= 9.8 * dt; // Gravity
-                p.pos.addScaledVector(p.vel, dt);
-                p.rot.add(p.rotVel);
-                p.life -= p.decay;
+        this.chunks.forEach(c => {
+            if(c.active) {
+                c.vel.y -= 30 * dt; // Gravity
+                c.mesh.position.addScaledVector(c.vel, dt);
+                c.mesh.rotation.x += c.rot.x * dt; 
+                c.mesh.rotation.y += c.rot.y * dt; 
+                c.mesh.rotation.z += c.rot.z * dt;
 
-                // Floor collision
-                if(p.pos.y < -3) {
-                    p.pos.y = -3;
-                    p.vel.y *= -0.5;
-                    p.vel.x *= 0.8; p.vel.z *= 0.8;
+                // Floor bounce
+                if(c.mesh.position.y < -3) {
+                    c.mesh.position.y = -3;
+                    c.vel.y *= -0.4; 
+                    c.vel.x *= 0.7; c.vel.z *= 0.7;
+                    c.rot.multiplyScalar(0.8);
                 }
-
-                if(p.life <= 0) {
-                    p.active = false;
-                    this.dummy.position.set(0,-1000,0);
-                    this.dummy.scale.set(0,0,0);
-                } else {
-                    this.dummy.position.copy(p.pos);
-                    this.dummy.rotation.set(p.rot.x, p.rot.y, p.rot.z);
-                    this.dummy.scale.setScalar(p.scale * p.life);
-                }
-                
-                this.dummy.updateMatrix();
-                this.mesh.setMatrixAt(i, this.dummy.matrix);
-                needsUpdate = true;
             }
-        }
-        if(needsUpdate) this.mesh.instanceMatrix.needsUpdate = true;
+        });
+    }
+
+    hide() {
+        this.chunks.forEach(c => { c.active = false; c.mesh.visible = false; });
     }
 }
 
 /** ---------------------------------------------------------------------------
- * MAIN 3D ENGINE CONTROLLER
+ * 5. PARTICLE SYSTEM (THE FLESH/JUICE)
+ * --------------------------------------------------------------------------- */
+class ParticleSystem {
+    constructor(scene) {
+        this.max = 3000;
+        this.geo = new THREE.BoxGeometry(0.15, 0.15, 0.15);
+        this.mat = new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.0 });
+        this.mesh = new THREE.InstancedMesh(this.geo, this.mat, this.max);
+        this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        this.mesh.castShadow = true;
+        scene.add(this.mesh);
+        this.dummy = new THREE.Object3D(); this.col = new THREE.Color();
+        this.p = []; this.idx = 0;
+    }
+    emit(pos, norm, cnt, isExp, colorHex) {
+        this.col.setHex(colorHex);
+        for(let i=0; i<cnt; i++) {
+            const id = this.idx % this.max;
+            let d = norm.clone();
+            if(isExp) d.set(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
+            else { d.x+=(Math.random()-0.5)*2; d.y+=(Math.random()-0.5)*2; d.z+=(Math.random()-0.5)*2; d.normalize(); }
+            const spd = (Math.random()*6+3) * (isExp?4:1);
+            this.p[id] = {
+                act: true, pos: pos.clone(), vel: d.multiplyScalar(spd),
+                r: new THREE.Vector3(Math.random(),Math.random(),Math.random()),
+                rv: new THREE.Vector3((Math.random()-0.5)*0.5,(Math.random()-0.5)*0.5,(Math.random()-0.5)*0.5),
+                s: (Math.random()*0.5+0.5) * (isExp?2.5:1),
+                l: 1.0, dec: (Math.random()*0.02+0.01)/(isExp?0.4:1)
+            };
+            this.mesh.setColorAt(id, this.col);
+            this.idx++;
+        }
+        this.mesh.instanceColor.needsUpdate = true;
+    }
+    update(dt) {
+        let nu = false;
+        for(let i=0; i<this.max; i++) {
+            const p = this.p[i];
+            if(p && p.act) {
+                p.vel.y -= 15*dt; p.pos.addScaledVector(p.vel, dt); p.r.add(p.rv); p.l -= p.dec;
+                if(p.pos.y < -3) { p.pos.y=-3; p.vel.y*=-0.5; p.vel.x*=0.8; p.vel.z*=0.8; }
+                if(p.l <= 0) { p.act = false; this.dummy.position.set(0,-1000,0); this.dummy.scale.set(0,0,0); }
+                else { this.dummy.position.copy(p.pos); this.dummy.rotation.set(p.r.x,p.r.y,p.r.z); this.dummy.scale.setScalar(p.s*p.l); }
+                this.dummy.updateMatrix(); this.mesh.setMatrixAt(i, this.dummy.matrix); nu = true;
+            }
+        }
+        if(nu) this.mesh.instanceMatrix.needsUpdate = true;
+    }
+}
+
+/** ---------------------------------------------------------------------------
+ * 6. MAIN ENGINE LOGIC
  * --------------------------------------------------------------------------- */
 class Engine3D {
     constructor() {
         this.container = document.getElementById('webgl-container');
         this.scene = new THREE.Scene();
-        this.scene.fog = new THREE.FogExp2(0x050508, 0.05);
+        this.scene.fog = new THREE.FogExp2(0x020203, 0.04);
         
         this.camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
-        this.camera.position.set(0, 0, 10);
+        this.camera.position.set(0, 2, 14);
         
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -550,30 +461,27 @@ class Engine3D {
         
         this.setupLighting();
         
-        // Environment Floor
-        const floorGeo = new THREE.PlaneGeometry(50, 50);
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x050508, roughness: 0.1, metalness: 0.0 });
+        const floorGeo = new THREE.PlaneGeometry(100, 100);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x050508, roughness: 0.2, metalness: 0.1 });
         const floor = new THREE.Mesh(floorGeo, floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.y = -3;
-        floor.receiveShadow = true;
+        floor.rotation.x = -Math.PI / 2; floor.position.y = -3; floor.receiveShadow = true;
         this.scene.add(floor);
 
         this.particles = new ParticleSystem(this.scene);
+        this.chunks = new ChunkSystem(this.scene);
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
         
         this.clock = new THREE.Clock();
-        this.targetObj = null;
         this.baseGroup = new THREE.Group();
         this.scene.add(this.baseGroup);
         
-        this.state = { hits: 0, maxHits: 50, mass: 0, type: 'watermelon', exploded: false };
+        this.state = { hits: 0, max: 50, mass: 0, type: 'watermelon', exp: false, introActive: true };
         this.ui = {
-            stage: document.getElementById('ui-stage'),
-            mass: document.getElementById('ui-mass'),
-            pFill: document.getElementById('prog-fill'),
-            flash: document.getElementById('flash')
+            s: document.getElementById('ui-stage'), m: document.getElementById('ui-mass'),
+            pf: document.getElementById('prog-fill'), f: document.getElementById('flash'),
+            layer: document.getElementById('ui-layer'), cross: document.getElementById('crosshair'),
+            panel: document.querySelector('.panel')
         };
         
         this.initInteraction();
@@ -581,71 +489,68 @@ class Engine3D {
         
         window.addEventListener('resize', () => this.onResize());
         this.renderer.setAnimationLoop(() => this.render());
+
+        // Process Intro Sequence
+        setTimeout(() => {
+            const intro = document.getElementById('intro');
+            intro.style.opacity = '0';
+            this.ui.layer.style.opacity = '1';
+            this.ui.cross.style.opacity = '0.6';
+            setTimeout(() => {
+                intro.remove();
+                this.state.introActive = false;
+            }, 500);
+        }, 5000);
     }
 
     setupLighting() {
-        const amb = new THREE.AmbientLight(0xffffff, 0.3);
-        this.scene.add(amb);
-        
-        this.dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
-        this.dirLight.position.set(5, 10, 5);
+        this.scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+        this.dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        this.dirLight.position.set(8, 15, 8);
         this.dirLight.castShadow = true;
-        this.dirLight.shadow.mapSize.width = 2048;
-        this.dirLight.shadow.mapSize.height = 2048;
+        this.dirLight.shadow.mapSize.width = 2048; this.dirLight.shadow.mapSize.height = 2048;
+        this.dirLight.shadow.camera.near = 0.5; this.dirLight.shadow.camera.far = 50;
+        this.dirLight.shadow.bias = -0.001;
         this.scene.add(this.dirLight);
         
-        const backLight = new THREE.PointLight(0x00ffcc, 0.5, 20);
-        backLight.position.set(-5, 0, -5);
-        this.scene.add(backLight);
-
-        this.fillLight = new THREE.PointLight(0xff0044, 0.0, 20); // Dynamic tension light
-        this.fillLight.position.set(0, -2, 4);
-        this.scene.add(this.fillLight);
+        const bl = new THREE.PointLight(0x00ffcc, 0.6, 20); bl.position.set(-8, 2, -8); this.scene.add(bl);
+        this.fillLight = new THREE.PointLight(0xff0044, 0.0, 20); this.fillLight.position.set(0, -2, 6); this.scene.add(this.fillLight);
     }
 
     loadFruit(type) {
-        if(this.targetObj) {
-            this.targetObj.geometry.dispose();
-            this.targetObj.material.dispose();
-            this.baseGroup.remove(this.targetObj);
+        if(this.fruitModel) {
+            this.fruitModel.geometry.dispose();
+            this.fruitModel.mat.dispose();
+            this.baseGroup.remove(this.fruitModel.mesh);
         }
         
         this.fruitModel = new ProceduralFruit(type);
-        this.targetObj = this.fruitModel.mesh;
-        this.baseGroup.add(this.targetObj);
+        this.baseGroup.add(this.fruitModel.mesh);
         
-        this.state.hits = 0;
-        this.state.mass = 0;
-        this.state.exploded = false;
-        this.state.type = type;
+        this.chunks.build(this.fruitModel);
         
-        this.baseGroup.position.set(0,0,0);
-        this.baseGroup.scale.set(1,1,1);
+        this.state.hits = 0; this.state.mass = 0; this.state.exp = false; this.state.type = type;
+        this.fruitModel.mesh.visible = true;
+        this.baseGroup.position.set(0,0,0); this.baseGroup.rotation.set(0,0,0);
         this.updateUI();
     }
 
     initInteraction() {
         const handleHit = (x, y) => {
-            if(this.state.exploded) return;
-            
-            this.mouse.x = (x / window.innerWidth) * 2 - 1;
-            this.mouse.y = -(y / window.innerHeight) * 2 + 1;
-            
+            if(this.state.exp || this.state.introActive) return;
+            this.mouse.x = (x/window.innerWidth)*2-1; this.mouse.y = -(y/window.innerHeight)*2+1;
             this.raycaster.setFromCamera(this.mouse, this.camera);
-            const intersects = this.raycaster.intersectObject(this.targetObj);
-            
-            if(intersects.length > 0) {
-                const hit = intersects[0];
-                this.executeDamage(hit);
-            }
+            const hits = this.raycaster.intersectObject(this.fruitModel.mesh);
+            if(hits.length > 0) this.doDamage(hits[0]);
         };
 
-        const evOpt = { passive: false };
-        this.container.addEventListener('mousedown', (e) => { e.preventDefault(); handleHit(e.clientX, e.clientY); }, evOpt);
-        this.container.addEventListener('touchstart', (e) => { e.preventDefault(); handleHit(e.touches[0].clientX, e.touches[0].clientY); }, evOpt);
+        const opt = { passive: false };
+        this.container.addEventListener('mousedown', (e) => { e.preventDefault(); handleHit(e.clientX, e.clientY); }, opt);
+        this.container.addEventListener('touchstart', (e) => { e.preventDefault(); handleHit(e.touches[0].clientX, e.touches[0].clientY); }, opt);
 
         document.querySelectorAll('.btn').forEach(b => {
             b.addEventListener('click', (e) => {
+                if(this.state.introActive) return;
                 document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
                 e.target.classList.add('active');
                 this.loadFruit(e.target.dataset.type);
@@ -653,119 +558,96 @@ class Engine3D {
         });
     }
 
-    executeDamage(hitData) {
-        if(this.state.hits >= this.state.maxHits) return;
+    doDamage(hit) {
+        if(this.state.hits >= this.state.max) return;
         this.state.hits++;
+        const md = FRUIT_DATA[this.state.type];
         
-        const matData = FRUIT_DATA[this.state.type];
+        this.state.mass += (Math.random()*0.06+0.03) * md.dens;
+        audio.playHit(this.state.hits, md.dens);
         
-        // Physics logic
-        const impactMass = (Math.random()*0.05 + 0.02) * matData.density;
-        this.state.mass += impactMass;
-        
-        // Audio
-        audio.playHit(this.state.hits, matData.density);
-        
-        // Apply procedural canvas damage map
-        if(hitData.uv) {
-            this.fruitModel.applyDamage(hitData.uv, this.state.hits);
-        }
+        if(hit.uv) this.fruitModel.applyDamage(hit.uv, this.state.hits);
 
-        // Spawn 3D Particles
-        const normal = hitData.face ? hitData.face.normal.clone().transformDirection(this.targetObj.matrixWorld) : new THREE.Vector3(0,0,1);
-        const emitCount = Math.floor(this.state.hits / 2) + 5;
-        this.particles.emit(hitData.point, normal, emitCount, false, matData.colorIn);
+        const n = hit.face ? hit.face.normal.clone().transformDirection(this.fruitModel.mesh.matrixWorld) : new THREE.Vector3(0,0,1);
+        this.particles.emit(hit.point, n, Math.floor(this.state.hits/2)+6, false, md.cIn);
 
-        // Mesh Jiggle Physics
-        const force = this.state.hits * 0.02;
-        this.baseGroup.position.set((Math.random()-0.5)*force, (Math.random()-0.5)*force, (Math.random()-0.5)*force - (force*2));
-        this.baseGroup.rotation.set((Math.random()-0.5)*force, (Math.random()-0.5)*force, (Math.random()-0.5)*force);
+        const f = this.state.hits * 0.025;
+        this.baseGroup.position.set((Math.random()-0.5)*f, (Math.random()-0.5)*f, (Math.random()-0.5)*f-(f*1.5));
+        this.baseGroup.rotation.set((Math.random()-0.5)*f, (Math.random()-0.5)*f, (Math.random()-0.5)*f);
 
-        // Lighting Tension
-        this.fillLight.intensity = (this.state.hits / this.state.maxHits) * 2.0;
-
+        this.fillLight.intensity = (this.state.hits/this.state.max)*2.5;
         this.updateUI();
 
-        if(this.state.hits >= this.state.maxHits) {
-            this.triggerExplosion();
-        }
+        if(this.state.hits >= this.state.max) this.explode();
     }
 
-    triggerExplosion() {
-        this.state.exploded = true;
-        const matData = FRUIT_DATA[this.state.type];
-        
+    explode() {
+        this.state.exp = true;
+        const md = FRUIT_DATA[this.state.type];
         audio.playExplode();
 
-        // Screen Flash
-        this.ui.flash.style.transition = 'none';
-        this.ui.flash.style.opacity = '1';
-        this.ui.flash.style.background = '#' + matData.colorIn.toString(16).padStart(6, '0');
-        setTimeout(() => {
-            this.ui.flash.style.transition = 'opacity 2s ease-out';
-            this.ui.flash.style.opacity = '0';
-        }, 50);
+        this.ui.f.style.transition = 'none'; this.ui.f.style.opacity = '1';
+        this.ui.f.style.background = '#'+md.cIn.toString(16).padStart(6,'0');
+        setTimeout(() => { this.ui.f.style.transition = 'opacity 2s cubic-bezier(0.1, 0.9, 0.2, 1)'; this.ui.f.style.opacity = '0'; }, 50);
 
-        // Hide Mesh
-        this.targetObj.visible = false;
-
-        // Massive Particle Burst
-        this.particles.emit(this.targetObj.position, new THREE.Vector3(0,1,0), 2000, true, matData.colorIn);
+        this.fruitModel.mesh.visible = false;
+        
+        // Execute Chunk Physics (Shell shattering to reveal inside)
+        this.chunks.explode(this.baseGroup.position, this.baseGroup.rotation);
+        
+        // Blast Particles
+        this.particles.emit(this.baseGroup.position, new THREE.Vector3(0,1,0), 3000, true, md.cIn);
         
         this.fillLight.intensity = 0;
-
-        // Auto Reset
-        setTimeout(() => {
-            this.loadFruit(this.state.type);
-        }, 3000);
+        setTimeout(() => this.loadFruit(this.state.type), 4000);
     }
 
     updateUI() {
-        const pct = (this.state.hits / this.state.maxHits) * 100;
-        this.ui.stage.innerText = `${this.state.hits} / ${this.state.maxHits}`;
-        this.ui.mass.innerText = `${this.state.mass.toFixed(2)} kg`;
-        this.ui.pFill.style.width = `${pct}%`;
+        const p = (this.state.hits/this.state.max)*100;
+        this.ui.s.innerText = `${this.state.hits} / ${this.state.max}`;
+        this.ui.m.innerText = `${this.state.mass.toFixed(2)} kg`;
+        this.ui.pf.style.width = `${p}%`;
         
-        if(pct > 80) document.documentElement.style.setProperty('--accent', '#' + FRUIT_DATA[this.state.type].colorIn.toString(16).padStart(6,'0'));
-        else document.documentElement.style.setProperty('--accent', '#ff0044');
+        const color = p > 80 ? '#'+FRUIT_DATA[this.state.type].cIn.toString(16).padStart(6,'0') : '#ff0044';
+        document.documentElement.style.setProperty('--accent', color);
+        
+        if(p > 80) {
+            this.ui.panel.style.animation = 'glitch 0.2s infinite';
+            this.ui.cross.style.background = color;
+        } else {
+            this.ui.panel.style.animation = 'none';
+            this.ui.cross.style.background = '#fff';
+        }
     }
 
     onResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.aspect = window.innerWidth/window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
     render() {
-        const dt = this.clock.getDelta();
-        const time = this.clock.getElapsedTime();
+        const dt = this.clock.getDelta(), t = this.clock.getElapsedTime();
 
-        // Idle floating/rotation
-        if(this.baseGroup && !this.state.exploded) {
-            // Restore position gradually from hits
-            this.baseGroup.position.lerp(new THREE.Vector3(0, Math.sin(time)*0.2, 0), 0.1);
+        if(!this.state.exp && !this.state.introActive) {
+            this.baseGroup.position.lerp(new THREE.Vector3(0, Math.sin(t*2)*0.2, 0), 0.1);
             this.baseGroup.rotation.y += 0.005;
-            // Restore rotation to upright gradually
             this.baseGroup.rotation.x = THREE.MathUtils.lerp(this.baseGroup.rotation.x, 0, 0.1);
             this.baseGroup.rotation.z = THREE.MathUtils.lerp(this.baseGroup.rotation.z, 0, 0.1);
 
-            // Critical state shuddering
-            if(this.state.hits > 40) {
-                const s = (this.state.hits - 40) * 0.005;
-                this.baseGroup.position.add(new THREE.Vector3((Math.random()-0.5)*s, (Math.random()-0.5)*s, (Math.random()-0.5)*s));
+            if(this.state.hits > 35) {
+                const s = (this.state.hits-35)*0.006;
+                this.baseGroup.position.add(new THREE.Vector3((Math.random()-0.5)*s,(Math.random()-0.5)*s,(Math.random()-0.5)*s));
             }
         }
 
+        this.chunks.update(dt);
         this.particles.update(dt);
         this.renderer.render(this.scene, this.camera);
     }
 }
 
-// Boot Engine
-window.onload = () => {
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    window.Engine = new Engine3D();
-};
+window.onload = () => { document.addEventListener('contextmenu', e => e.preventDefault()); window.Engine = new Engine3D(); };
 </script>
 </body>
 </html>
