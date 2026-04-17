@@ -3,775 +3,1277 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>HYPER-DETAILED FRUIT DESTRUCTOR ENGINE</title>
+<title>ULTIMATE HAND-SLAP FRUIT DESTRUCTOR - EXTENDED EDITION</title>
 <style>
-    /* ==========================================================================
-       CORE ENGINE STYLES & CSS VARIABLES
-       ========================================================================== */
-    :root {
-        --bg-void: #050508;
-        --ui-glass: rgba(15, 15, 20, 0.6);
-        --ui-border: rgba(255, 255, 255, 0.08);
-        --ui-text: #e0e0f0;
-        --ui-accent: #ff0044;
-        
-        /* HYPER-DETAILED COLOR PALETTES */
-        --wm-base: #113311; --wm-stripe1: #2d6a32; --wm-stripe2: #4a8c42; --wm-stripe3: #5dbb63; --wm-flesh: #ff1133; --wm-seed: #0a0a0a; --wm-rind: #ccffcc;
-        --ap-base: #500000; --ap-mid: #cc1111; --ap-high: #ff4444; --ap-glare: #ffcccc; --ap-flesh: #ffffe6; --ap-core: #cccc99; --ap-stem: #332211;
-        --or-base: #883300; --or-mid: #dd6600; --or-high: #ff9900; --or-pore: #cc5500; --or-flesh: #ffaa00; --or-pith: #ffffea;
-        --co-base: #1a0f05; --co-mid: #331a00; --co-high: #593311; --co-hair: #221100; --co-flesh: #ffffff; --co-water: rgba(255,255,255,0.7);
-        --pu-base: #662200; --pu-mid: #cc4400; --pu-high: #ff7700; --pu-crease: #441100; --pu-flesh: #ff9933; --pu-stem: #1a3300;
-        --pi-base: #664400; --pi-mid: #cca300; --pi-high: #ffe600; --pi-scale: #4d3300; --pi-flesh: #ffff66; --pi-leaf: #004d00;
-    }
+/* ==========================================================================
+   GLOBAL RESET & BASE ENGINE VARIABLES
+   ========================================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-drag: none;
+    touch-action: manipulation;
+}
 
-    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-drag: none; touch-action: manipulation; }
+:root {
+    --color-bg-void: #020204;
+    --color-grid-line: rgba(40, 200, 255, 0.05);
+    --color-ui-bg: rgba(10, 10, 15, 0.85);
+    --color-ui-border: rgba(100, 200, 255, 0.2);
+    --color-text-primary: #e0f0ff;
+    --color-text-dim: #6080a0;
+    --color-accent-main: #ff2a5f;
+    --color-accent-glow: rgba(255, 42, 95, 0.6);
+    --color-accent-alt: #00ffcc;
 
-    body {
-        width: 100vw; height: 100vh; overflow: hidden;
-        background-color: var(--bg-void);
-        background-image: 
-            radial-gradient(circle at 50% 50%, #1a1a24 0%, var(--bg-void) 100%),
-            linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-        background-size: 100% 100%, 40px 40px, 40px 40px;
-        background-position: center, center, center;
-        font-family: 'Consolas', 'Courier New', monospace;
-        color: var(--ui-text);
-        perspective: 1200px;
-    }
-
-    /* ==========================================================================
-       UI COMPONENTS
-       ========================================================================== */
-    #hud {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        pointer-events: none; z-index: 1000; display: flex; flex-direction: column;
-    }
-
-    .toolbar {
-        display: flex; justify-content: center; gap: 8px; padding: 20px;
-        background: linear-gradient(180deg, rgba(0,0,0,0.8), transparent);
-        pointer-events: auto; flex-wrap: wrap;
-    }
-
-    .btn-fruit {
-        background: var(--ui-glass); border: 1px solid var(--ui-border);
-        color: #aaa; padding: 10px 20px; font-size: 12px; font-weight: bold;
-        letter-spacing: 2px; text-transform: uppercase; border-radius: 4px;
-        cursor: pointer; transition: 0.2s all; position: relative; overflow: hidden;
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-    }
-
-    .btn-fruit::after {
-        content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px;
-        background: var(--ui-accent); transform: scaleX(0); transition: 0.3s transform;
-    }
-
-    .btn-fruit:hover { color: #fff; background: rgba(255,255,255,0.1); }
-    .btn-fruit.active { color: #fff; border-color: rgba(255,255,255,0.3); text-shadow: 0 0 8px rgba(255,255,255,0.5); }
-    .btn-fruit.active::after { transform: scaleX(1); }
-
-    .telemetry {
-        position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-        display: flex; flex-direction: column; align-items: center; width: 400px;
-    }
-
-    .data-row {
-        display: flex; justify-content: space-between; width: 100%;
-        font-size: 10px; color: #666; margin-bottom: 5px; text-transform: uppercase;
-    }
-
-    .data-value { color: var(--ui-accent); font-weight: bold; font-size: 14px; }
-
-    #damage-bar-bg {
-        width: 100%; height: 6px; background: rgba(0,0,0,0.8);
-        border: 1px solid var(--ui-border); border-radius: 3px; position: relative; overflow: hidden;
-    }
-
-    #damage-bar-fill {
-        height: 100%; width: 0%; background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
-        background-size: 300% 100%; transition: width 0.1s linear, filter 0.2s;
-        box-shadow: 0 0 10px var(--ui-accent);
-    }
-
-    #hit-counter {
-        font-size: 8rem; font-weight: 900; line-height: 0.8; opacity: 0.1;
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        z-index: -1; text-shadow: 0 0 50px rgba(255,0,0,0.2);
-    }
-
-    /* ==========================================================================
-       RENDERING STAGE
-       ========================================================================== */
-    #stage {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        display: flex; justify-content: center; align-items: center;
-        transform-style: preserve-3d;
-    }
-
-    #entity-container {
-        position: relative; width: 400px; height: 400px; cursor: crosshair;
-        transform-style: preserve-3d; filter: drop-shadow(0 30px 40px rgba(0,0,0,0.8));
-    }
-
-    .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; pointer-events: none; }
-
-    /* ==========================================================================
-       HYPER-DETAILED FRUIT CSS ARCHITECTURES (400+ lines equivalent complexity)
-       ========================================================================== */
+    /* FRUIT COLOR MATRICES (HIGH DEFINITION) */
+    --wm-base: #0a1a0a; --wm-rind-out: #1a4720; --wm-rind-mid: #2d6a32; --wm-rind-in: #5dbb63; 
+    --wm-flesh-edge: #ff8899; --wm-flesh-core: #ff1133; --wm-flesh-deep: #cc0022; --wm-seed: #050505;
     
-    /* --- WATERMELON --- */
-    .fruit-watermelon .layer-base {
-        background: radial-gradient(circle at 30% 30%, var(--wm-stripe2) 0%, var(--wm-base) 80%, #000 100%);
-        box-shadow: inset -40px -40px 80px rgba(0,0,0,0.8), inset 20px 20px 40px rgba(255,255,255,0.2);
-        border-radius: 46% 54% 48% 52% / 54% 48% 52% 46%;
-    }
-    .fruit-watermelon .layer-texture1 {
-        background: repeating-radial-gradient(ellipse at 50% 50%, transparent 0%, transparent 8%, var(--wm-stripe1) 9%, var(--wm-stripe1) 12%);
-        opacity: 0.6; mix-blend-mode: multiply; border-radius: inherit; filter: blur(2px) url(#turbulence);
-    }
-    .fruit-watermelon .layer-texture2 {
-        background: repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(93,187,99,0.4) 16px, rgba(93,187,99,0.4) 22px);
-        opacity: 0.4; mix-blend-mode: overlay; border-radius: inherit; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-    }
-    .fruit-watermelon .layer-specular {
-        background: radial-gradient(ellipse at 35% 25%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 10%, transparent 30%);
-        border-radius: inherit; z-index: 10;
-    }
-
-    /* --- APPLE --- */
-    .fruit-apple .layer-base {
-        background: radial-gradient(circle at 35% 30%, var(--ap-high) 0%, var(--ap-mid) 40%, var(--ap-base) 90%, #200 100%);
-        box-shadow: inset -50px -30px 60px rgba(0,0,0,0.9), inset 15px 25px 30px rgba(255,150,150,0.4);
-        border-radius: 50% 50% 48% 48% / 60% 60% 40% 40%;
-    }
-    .fruit-apple .layer-texture1 {
-        background: radial-gradient(rgba(255,255,200,0.3) 1px, transparent 2px);
-        background-size: 8px 8px; background-position: 0 0, 4px 4px;
-        opacity: 0.5; border-radius: inherit; mix-blend-mode: screen; filter: url(#turbulence-fine);
-    }
-    .fruit-apple .layer-texture2 {
-        content: ''; position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
-        width: 14px; height: 45px; background: linear-gradient(90deg, #1a0f00, var(--ap-stem), #000);
-        border-radius: 50% 50% 0 0 / 100% 100% 0 0; box-shadow: 2px 5px 10px rgba(0,0,0,0.6);
-        z-index: -1; clip-path: polygon(20% 0, 80% 0, 100% 100%, 0% 100%);
-    }
-    .fruit-apple .layer-texture2::after {
-        content: ''; position: absolute; top: 40px; left: -10px; width: 34px; height: 15px;
-        background: radial-gradient(ellipse, rgba(0,0,0,0.8) 0%, transparent 70%); border-radius: 50%;
-    }
-    .fruit-apple .layer-specular {
-        background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.4) 25%, rgba(255,255,255,0.1) 35%, transparent 40%);
-        border-radius: inherit; z-index: 10; mix-blend-mode: soft-light;
-    }
-
-    /* --- ORANGE --- */
-    .fruit-orange .layer-base {
-        background: radial-gradient(circle at 40% 35%, var(--or-high) 0%, var(--or-mid) 60%, var(--or-base) 100%);
-        box-shadow: inset -40px -40px 60px rgba(0,0,0,0.7), inset 20px 20px 50px rgba(255,255,255,0.3);
-        border-radius: 49% 51% 50% 50% / 51% 49% 50% 50%;
-    }
-    .fruit-orange .layer-texture1 {
-        background-image: 
-            radial-gradient(var(--or-pore) 15%, transparent 16%),
-            radial-gradient(rgba(0,0,0,0.2) 15%, transparent 16%);
-        background-size: 10px 10px; background-position: 0 0, 5px 5px;
-        opacity: 0.8; border-radius: inherit; mix-blend-mode: multiply; filter: url(#turbulence-fine) drop-shadow(0 1px 0 rgba(255,255,255,0.3));
-    }
-    .fruit-orange .layer-texture2 {
-        position: absolute; top: 15%; left: 45%; width: 12px; height: 12px;
-        background: #334411; border-radius: 50%; box-shadow: inset 0 2px 4px #000;
-        border: 2px solid var(--or-high);
-    }
-    .fruit-orange .layer-specular {
-        background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.2) 0%, transparent 40%);
-        border-radius: inherit; z-index: 10;
-    }
-
-    /* --- COCONUT --- */
-    .fruit-coconut .layer-base {
-        background: radial-gradient(circle at 45% 45%, var(--co-high) 0%, var(--co-mid) 50%, var(--co-base) 90%, #000 100%);
-        box-shadow: inset -30px -30px 60px rgba(0,0,0,0.9), inset 10px 10px 30px rgba(255,255,255,0.1);
-        border-radius: 48% 52% 49% 51% / 51% 49% 52% 48%;
-    }
-    .fruit-coconut .layer-texture1 {
-        background: repeating-linear-gradient(
-            80deg, transparent, transparent 2px, rgba(0,0,0,0.4) 3px, rgba(0,0,0,0.4) 5px, rgba(255,255,255,0.05) 6px
-        );
-        opacity: 0.7; border-radius: inherit; filter: url(#turbulence); mix-blend-mode: multiply;
-    }
-    .fruit-coconut .layer-texture2 {
-        background: repeating-linear-gradient(
-            -40deg, transparent, transparent 4px, rgba(0,0,0,0.3) 5px, rgba(0,0,0,0.3) 8px
-        );
-        opacity: 0.5; border-radius: inherit; filter: url(#turbulence-fine);
-    }
-    .fruit-coconut .layer-specular {
-        content: ''; position: absolute; top: 20%; left: 25%; width: 100%; height: 100%; border-radius: inherit;
-        background: 
-            radial-gradient(circle at 20px 20px, #0a0500 10px, transparent 11px),
-            radial-gradient(circle at 55px 10px, #0a0500 10px, transparent 11px),
-            radial-gradient(circle at 35px 45px, #0a0500 10px, transparent 11px);
-        background-repeat: no-repeat; filter: drop-shadow(0 2px 2px rgba(255,255,255,0.1));
-    }
-
-    /* --- PUMPKIN --- */
-    .fruit-pumpkin .layer-base {
-        background: var(--pu-mid);
-        box-shadow: inset -50px -50px 80px rgba(0,0,0,0.8), inset 20px 20px 50px rgba(255,255,255,0.2);
-        border-radius: 46% 46% 42% 42% / 50% 50% 46% 46%;
-    }
-    .fruit-pumpkin .layer-texture1 {
-        background: repeating-linear-gradient(
-            90deg, 
-            transparent 0%, transparent 8%, 
-            var(--pu-crease) 10%, rgba(0,0,0,0.5) 12%, 
-            var(--pu-high) 14%, transparent 16%
-        );
-        border-radius: inherit; mix-blend-mode: multiply; filter: url(#turbulence-fine);
-    }
-    .fruit-pumpkin .layer-texture2 {
-        position: absolute; top: -35px; left: 50%; transform: translateX(-50%);
-        width: 25px; height: 60px; background: linear-gradient(to right, #112200, var(--pu-stem), #051100);
-        border-radius: 5px 5px 15px 15px; box-shadow: inset 0 0 10px #000, 5px 10px 15px rgba(0,0,0,0.6); z-index: -1;
-        clip-path: polygon(20% 0, 80% 0, 100% 100%, 0% 100%);
-    }
-    .fruit-pumpkin .layer-specular {
-        background: linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.2) 12%, transparent 16%);
-        background-size: 60px 100%; border-radius: inherit; mix-blend-mode: screen;
-    }
-
-    /* --- PINEAPPLE --- */
-    .fruit-pineapple .layer-base {
-        background: radial-gradient(ellipse at 50% 40%, var(--pi-mid) 0%, var(--pi-base) 80%, #111 100%);
-        box-shadow: inset -40px -40px 60px rgba(0,0,0,0.8), inset 20px 20px 40px rgba(255,255,255,0.2);
-        border-radius: 42% 42% 48% 48% / 55% 55% 45% 45%;
-    }
-    .fruit-pineapple .layer-texture1 {
-        background-image: 
-            linear-gradient(135deg, var(--pi-scale) 25%, transparent 25%),
-            linear-gradient(225deg, var(--pi-scale) 25%, transparent 25%),
-            linear-gradient(45deg, var(--pi-scale) 25%, transparent 25%),
-            linear-gradient(315deg, var(--pi-scale) 25%, transparent 25%);
-        background-position: 25px 0, 25px 0, 0 0, 0 0; background-size: 50px 50px;
-        opacity: 0.9; border-radius: inherit; mix-blend-mode: overlay; filter: drop-shadow(0 4px 2px rgba(0,0,0,0.5));
-    }
-    .fruit-pineapple .layer-texture2 {
-        position: absolute; top: -140px; left: 10%; width: 80%; height: 160px;
-        background: 
-            linear-gradient(to top, var(--pi-leaf), transparent),
-            repeating-linear-gradient(15deg, transparent, transparent 10px, rgba(0,0,0,0.3) 11px, rgba(0,0,0,0.3) 15px);
-        clip-path: polygon(50% 0, 30% 20%, 40% 10%, 10% 40%, 30% 30%, 0 60%, 25% 50%, 0 80%, 30% 70%, 20% 100%, 80% 100%, 70% 70%, 100% 80%, 75% 50%, 100% 60%, 70% 30%, 90% 40%, 60% 10%, 70% 20%);
-        z-index: -1; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
-    }
-    .fruit-pineapple .layer-specular {
-        background-image: radial-gradient(circle at 25px 10px, rgba(255,255,255,0.4) 2px, transparent 4px);
-        background-size: 50px 50px; border-radius: inherit; z-index: 10;
-    }
-
-    /* ==========================================================================
-       CANVAS & POST-PROCESSING
-       ========================================================================== */
-    #canvas-cracks { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: inherit; z-index: 20; pointer-events: none; mix-blend-mode: multiply; }
-    #canvas-flesh { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: inherit; z-index: 15; pointer-events: none; }
-    #canvas-particles { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 500; pointer-events: none; }
+    --ap-base: #330000; --ap-skin-dark: #8b0000; --ap-skin-mid: #cc1111; --ap-skin-light: #ff3b30;
+    --ap-specular: #ffaaaa; --ap-flesh-out: #fffdd0; --ap-flesh-in: #f8f4e6; --ap-core: #d2b48c; --ap-stem: #4a2e1b;
     
-    .anim-shake { animation: shake var(--shake-dur) cubic-bezier(.36,.07,.19,.97) both infinite; }
-    .anim-impact { animation: impact 0.2s ease-out; }
-    .anim-pulse { animation: pulse 1s infinite alternate; }
+    --or-base: #4d1a00; --or-skin-dark: #cc5500; --or-skin-mid: #ff7700; --or-skin-light: #ffaa00;
+    --or-pore-shadow: rgba(100, 30, 0, 0.5); --or-pore-light: rgba(255, 255, 200, 0.4); --or-pith: #ffffe0; --or-flesh: #ff9900;
+    
+    --co-base: #0d0804; --co-shell-dark: #2a1608; --co-shell-mid: #4a2e1b; --co-shell-light: #6b4423;
+    --co-hair: #1a0f05; --co-meat-out: #e6e6e6; --co-meat-in: #ffffff; --co-water: rgba(230, 250, 255, 0.8);
+    
+    --pu-base: #331100; --pu-skin-dark: #b33c00; --pu-skin-mid: #e65c00; --pu-skin-light: #ff7f00;
+    --pu-crease-deep: #4d1a00; --pu-crease-edge: #802b00; --pu-flesh: #ff9933; --pu-stem-dark: #1e3300; --pu-stem-light: #4c8000;
+    
+    --pi-base: #332200; --pi-scale-dark: #806000; --pi-scale-mid: #cca300; --pi-scale-light: #ffd900;
+    --pi-crevice: #4d3300; --pi-spike: #ffff66; --pi-flesh: #ffe680; --pi-leaf-dark: #004d00; --pi-leaf-light: #009900;
+}
 
-    @keyframes shake {
-        0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-        10%, 90% { transform: translate3d(-1px, 0, 0) rotate(-1deg); }
-        20%, 80% { transform: translate3d(2px, 0, 0) rotate(1deg); }
-        30%, 50%, 70% { transform: translate3d(-4px, -2px, 0) rotate(-2deg); }
-        40%, 60% { transform: translate3d(4px, 2px, 0) rotate(2deg); }
-    }
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--color-bg-void);
+    background-image: 
+        radial-gradient(circle at 50% 50%, rgba(20, 20, 30, 1) 0%, var(--color-bg-void) 100%),
+        linear-gradient(var(--color-grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--color-grid-line) 1px, transparent 1px);
+    background-size: 100vw 100vh, 50px 50px, 50px 50px;
+    background-position: center, center, center;
+    font-family: 'Courier New', Courier, monospace;
+    color: var(--color-text-primary);
+    perspective: 1500px;
+}
 
-    @keyframes impact {
-        0% { transform: scale(1) translateZ(0); filter: brightness(2) contrast(1.5); }
-        20% { transform: scale(0.9) translateZ(-50px); filter: brightness(1.5) hue-rotate(-20deg); }
-        50% { transform: scale(1.05) translateZ(20px); filter: brightness(0.8); }
-        100% { transform: scale(1) translateZ(0); filter: brightness(1); }
-    }
+/* ==========================================================================
+   UI COMPONENTS & HUD
+   ========================================================================== */
+#hud-layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
 
-    @keyframes pulse {
-        0% { filter: drop-shadow(0 0 20px var(--ui-accent)); }
-        100% { filter: drop-shadow(0 0 60px var(--ui-accent)) brightness(1.2); }
-    }
+#toolbar-container {
+    width: 100%;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+    pointer-events: auto;
+}
 
-    /* Screen Flash Overlay */
-    #flash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #fff; opacity: 0; pointer-events: none; z-index: 9999; }
+#fruit-selector {
+    display: flex;
+    gap: 12px;
+    background: var(--color-ui-bg);
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid var(--color-ui-border);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+}
+
+.fruit-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--color-text-dim);
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.fruit-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.4s;
+}
+
+.fruit-btn:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+}
+
+.fruit-btn:hover::before {
+    left: 100%;
+}
+
+.fruit-btn.active {
+    color: #fff;
+    background: rgba(255, 42, 95, 0.15);
+    border-color: var(--color-accent-main);
+    box-shadow: 0 0 20px var(--color-accent-glow), inset 0 0 15px var(--color-accent-glow);
+    text-shadow: 0 0 10px #fff;
+}
+
+#telemetry-dashboard {
+    width: 100%;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+    pointer-events: auto;
+}
+
+.dashboard-panel {
+    width: 500px;
+    background: var(--color-ui-bg);
+    border: 1px solid var(--color-ui-border);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-panel::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--color-accent-alt), transparent);
+    opacity: 0.5;
+}
+
+.data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.data-cell {
+    display: flex;
+    flex-direction: column;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.data-label {
+    font-size: 10px;
+    color: var(--color-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.data-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--color-accent-alt);
+    font-family: monospace;
+    text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+}
+
+#progress-container {
+    width: 100%;
+    height: 12px;
+    background: #000;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+    position: relative;
+}
+
+#progress-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #00ffcc, #ffff00, #ff0044);
+    background-size: 300% 100%;
+    transition: width 0.1s cubic-bezier(0.1, 0.7, 0.1, 1);
+    box-shadow: 0 0 15px rgba(255,0,0,0.8);
+}
+
+#central-counter {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 15vw;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.03);
+    z-index: 1;
+    pointer-events: none;
+    line-height: 1;
+}
+
+/* ==========================================================================
+   SCENE & ENTITY RENDERING
+   ========================================================================== */
+#scene-graph {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    transform-style: preserve-3d;
+}
+
+#target-entity-wrapper {
+    position: relative;
+    width: 500px; height: 500px;
+    cursor: crosshair;
+    transform-origin: center center;
+    transform-style: preserve-3d;
+    filter: drop-shadow(0 50px 50px rgba(0,0,0,0.9));
+}
+
+.entity-layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    pointer-events: none;
+    transform-style: preserve-3d;
+}
+
+/* ==========================================================================
+   HYPER-DETAILED PROCEDURAL CSS FRUITS (BASE STRUCTURES)
+   ========================================================================== */
+
+/* 1. WATERMELON ARCHITECTURE */
+.fruit-watermelon .layer-base {
+    background: radial-gradient(circle at 35% 35%, var(--wm-rind-in) 0%, var(--wm-rind-mid) 40%, var(--wm-rind-out) 80%, var(--wm-base) 100%);
+    box-shadow: inset -60px -60px 100px rgba(0,0,0,0.9), inset 30px 30px 60px rgba(255,255,255,0.2);
+    border-radius: 46% 54% 48% 52% / 54% 48% 52% 46%;
+}
+.fruit-watermelon .layer-detail-1 {
+    background: repeating-radial-gradient(ellipse at 50% 50%, transparent 0%, transparent 8%, rgba(26, 71, 32, 0.8) 9%, rgba(26, 71, 32, 0.8) 12%);
+    mix-blend-mode: multiply; border-radius: inherit; filter: blur(3px) url(#svg-noise-macro);
+}
+.fruit-watermelon .layer-detail-2 {
+    background: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(93, 187, 99, 0.5) 21px, rgba(93, 187, 99, 0.5) 30px);
+    mix-blend-mode: overlay; border-radius: inherit; filter: url(#svg-noise-micro);
+}
+.fruit-watermelon .layer-highlight {
+    background: radial-gradient(ellipse at 30% 25%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.1) 15%, transparent 40%);
+    border-radius: inherit; mix-blend-mode: screen;
+}
+
+/* 2. APPLE ARCHITECTURE */
+.fruit-apple .layer-base {
+    background: radial-gradient(circle at 40% 35%, var(--ap-skin-light) 0%, var(--ap-skin-mid) 50%, var(--ap-skin-dark) 85%, var(--ap-base) 100%);
+    box-shadow: inset -70px -40px 80px rgba(0,0,0,0.9), inset 20px 30px 40px rgba(255,150,150,0.3);
+    border-radius: 50% 50% 48% 48% / 60% 60% 40% 40%;
+}
+.fruit-apple .layer-detail-1 {
+    background-image: radial-gradient(rgba(255, 255, 200, 0.4) 1px, transparent 2px);
+    background-size: 12px 12px; background-position: 0 0, 6px 6px;
+    mix-blend-mode: screen; border-radius: inherit; filter: url(#svg-noise-micro); opacity: 0.7;
+}
+.fruit-apple .layer-detail-2 {
+    content: ''; position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+    width: 18px; height: 60px; background: linear-gradient(90deg, #221100, var(--ap-stem), #110000);
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0; box-shadow: 4px 8px 15px rgba(0,0,0,0.7);
+    z-index: -1; clip-path: polygon(25% 0, 75% 0, 100% 100%, 0% 100%);
+}
+.fruit-apple .layer-highlight {
+    background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,0.6) 25%, rgba(255,255,255,0.2) 35%, transparent 45%);
+    border-radius: inherit; mix-blend-mode: soft-light;
+}
+
+/* 3. ORANGE ARCHITECTURE */
+.fruit-orange .layer-base {
+    background: radial-gradient(circle at 35% 35%, var(--or-skin-light) 0%, var(--or-skin-mid) 55%, var(--or-skin-dark) 90%, var(--or-base) 100%);
+    box-shadow: inset -50px -50px 80px rgba(0,0,0,0.8), inset 25px 25px 60px rgba(255,255,255,0.4);
+    border-radius: 49% 51% 50% 50% / 51% 49% 50% 50%;
+}
+.fruit-orange .layer-detail-1 {
+    background-image: 
+        radial-gradient(var(--or-pore-shadow) 20%, transparent 21%),
+        radial-gradient(var(--or-pore-light) 20%, transparent 21%);
+    background-size: 16px 16px; background-position: 0 0, 8px 8px;
+    mix-blend-mode: multiply; border-radius: inherit; filter: url(#svg-noise-micro) drop-shadow(0 2px 1px rgba(255,255,255,0.2));
+}
+.fruit-orange .layer-detail-2 {
+    position: absolute; top: 18%; left: 42%; width: 16px; height: 16px;
+    background: #2a3311; border-radius: 50%; box-shadow: inset 0 3px 6px #000;
+    border: 2px solid var(--or-skin-light); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+.fruit-orange .layer-highlight {
+    background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.3) 0%, transparent 50%);
+    border-radius: inherit;
+}
+
+/* 4. COCONUT ARCHITECTURE */
+.fruit-coconut .layer-base {
+    background: radial-gradient(circle at 45% 45%, var(--co-shell-light) 0%, var(--co-shell-mid) 50%, var(--co-shell-dark) 85%, var(--co-base) 100%);
+    box-shadow: inset -40px -40px 80px rgba(0,0,0,0.95), inset 15px 15px 40px rgba(255,255,255,0.15);
+    border-radius: 48% 52% 49% 51% / 51% 49% 52% 48%;
+}
+.fruit-coconut .layer-detail-1 {
+    background: repeating-linear-gradient(75deg, transparent, transparent 3px, rgba(0,0,0,0.5) 4px, rgba(0,0,0,0.5) 7px, rgba(255,255,255,0.05) 8px);
+    mix-blend-mode: multiply; border-radius: inherit; filter: url(#svg-noise-macro); opacity: 0.85;
+}
+.fruit-coconut .layer-detail-2 {
+    background: repeating-linear-gradient(-35deg, transparent, transparent 5px, rgba(0,0,0,0.4) 6px, rgba(0,0,0,0.4) 10px);
+    border-radius: inherit; filter: url(#svg-noise-micro); opacity: 0.6;
+}
+.fruit-coconut .layer-highlight {
+    background: 
+        radial-gradient(circle at 30px 30px, #050301 12px, transparent 14px),
+        radial-gradient(circle at 80px 20px, #050301 12px, transparent 14px),
+        radial-gradient(circle at 50px 70px, #050301 12px, transparent 14px);
+    background-repeat: no-repeat; border-radius: inherit;
+    filter: drop-shadow(0 3px 3px rgba(255,255,255,0.15));
+}
+
+/* 5. PUMPKIN ARCHITECTURE */
+.fruit-pumpkin .layer-base {
+    background: var(--pu-skin-mid);
+    box-shadow: inset -70px -70px 100px rgba(0,0,0,0.85), inset 30px 30px 70px rgba(255,255,255,0.3);
+    border-radius: 46% 46% 42% 42% / 50% 50% 46% 46%;
+}
+.fruit-pumpkin .layer-detail-1 {
+    background: repeating-linear-gradient(
+        90deg, 
+        transparent 0%, transparent 9%, 
+        var(--pu-crease-deep) 11%, rgba(0,0,0,0.6) 13%, 
+        var(--pu-skin-light) 16%, transparent 18%
+    );
+    mix-blend-mode: multiply; border-radius: inherit; filter: url(#svg-noise-micro);
+}
+.fruit-pumpkin .layer-detail-2 {
+    position: absolute; top: -45px; left: 50%; transform: translateX(-50%);
+    width: 35px; height: 80px; background: linear-gradient(to right, #0a1400, var(--pu-stem-light), #050a00);
+    border-radius: 8px 8px 20px 20px; box-shadow: inset 0 0 15px #000, 8px 15px 25px rgba(0,0,0,0.7); z-index: -1;
+    clip-path: polygon(25% 0, 75% 0, 100% 100%, 0% 100%);
+}
+.fruit-pumpkin .layer-highlight {
+    background: linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.3) 13%, transparent 18%);
+    background-size: 80px 100%; border-radius: inherit; mix-blend-mode: screen;
+}
+
+/* 6. PINEAPPLE ARCHITECTURE */
+.fruit-pineapple .layer-base {
+    background: radial-gradient(ellipse at 50% 40%, var(--pi-scale-mid) 0%, var(--pi-scale-dark) 85%, var(--pi-base) 100%);
+    box-shadow: inset -50px -50px 80px rgba(0,0,0,0.85), inset 25px 25px 50px rgba(255,255,255,0.25);
+    border-radius: 42% 42% 48% 48% / 55% 55% 45% 45%;
+}
+.fruit-pineapple .layer-detail-1 {
+    background-image: 
+        linear-gradient(135deg, var(--pi-crevice) 25%, transparent 25%),
+        linear-gradient(225deg, var(--pi-crevice) 25%, transparent 25%),
+        linear-gradient(45deg, var(--pi-crevice) 25%, transparent 25%),
+        linear-gradient(315deg, var(--pi-crevice) 25%, transparent 25%);
+    background-position: 35px 0, 35px 0, 0 0, 0 0; background-size: 70px 70px;
+    mix-blend-mode: overlay; border-radius: inherit; filter: drop-shadow(0 6px 4px rgba(0,0,0,0.6)); opacity: 0.95;
+}
+.fruit-pineapple .layer-detail-2 {
+    position: absolute; top: -180px; left: 10%; width: 80%; height: 220px;
+    background: 
+        linear-gradient(to top, var(--pi-leaf-light), transparent),
+        repeating-linear-gradient(15deg, transparent, transparent 15px, rgba(0,0,0,0.4) 16px, rgba(0,0,0,0.4) 22px);
+    clip-path: polygon(50% 0, 30% 20%, 40% 10%, 10% 40%, 30% 30%, 0 60%, 25% 50%, 0 80%, 30% 70%, 20% 100%, 80% 100%, 70% 70%, 100% 80%, 75% 50%, 100% 60%, 70% 30%, 90% 40%, 60% 10%, 70% 20%);
+    z-index: -1; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.85));
+}
+.fruit-pineapple .layer-highlight {
+    background-image: radial-gradient(circle at 35px 15px, rgba(255,255,255,0.5) 3px, transparent 6px);
+    background-size: 70px 70px; border-radius: inherit;
+}
+
+/* ==========================================================================
+   DYNAMIC RENDERING CANVASES
+   ========================================================================== */
+.render-canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    border-radius: inherit;
+    pointer-events: none;
+}
+#canvas-damage-deep { z-index: 10; mix-blend-mode: multiply; }
+#canvas-flesh-expose { z-index: 15; }
+#canvas-surface-cracks { z-index: 20; }
+#canvas-juice-splatter { z-index: 25; }
+
+#particle-engine-layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 500;
+}
+
+/* ==========================================================================
+   HAND SLAP SVG RIG & ANIMATION
+   ========================================================================== */
+#hand-rig {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 300px; height: 300px;
+    pointer-events: none;
+    z-index: 1000;
+    transform: translate(100vw, 100vh) rotate(-45deg) scale(1.5);
+    transform-origin: bottom right;
+    filter: drop-shadow(-20px 20px 30px rgba(0,0,0,0.8));
+    display: none; /* Managed by JS */
+}
+
+.hand-skin { fill: #ffccaa; stroke: #c88050; stroke-width: 4; stroke-linejoin: round; }
+.hand-shadow { fill: rgba(0,0,0,0.15); }
+.hand-highlight { fill: rgba(255,255,255,0.4); }
+.hand-line { stroke: #c88050; stroke-width: 3; fill: none; stroke-linecap: round; }
+
+/* Dynamic Slap Animations applied via JS classes */
+.anim-slap-execute {
+    display: block !important;
+    animation: slapKeyframes 0.15s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+@keyframes slapKeyframes {
+    0% { transform: translate(100%, 100%) rotate(-60deg) scale(1.5); opacity: 0; }
+    40% { transform: translate(20%, 20%) rotate(-20deg) scale(1.2); opacity: 1; }
+    80% { transform: translate(-30%, -30%) rotate(10deg) scale(0.9); filter: drop-shadow(-5px 5px 10px rgba(0,0,0,0.9)); }
+    100% { transform: translate(-20%, -20%) rotate(5deg) scale(0.95); filter: drop-shadow(-10px 10px 15px rgba(0,0,0,0.8)); }
+}
+
+/* Entity Impact Physics CSS */
+.physics-impact {
+    animation: impactJolt 0.2s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+@keyframes impactJolt {
+    0% { transform: scale(1) translate3d(0,0,0) rotate(0deg); filter: brightness(2) contrast(1.5); }
+    15% { transform: scale(0.85) translate3d(var(--vec-x), var(--vec-y), -100px) rotate(calc(var(--vec-rot) * 1deg)); filter: brightness(1.2); }
+    40% { transform: scale(1.05) translate3d(calc(var(--vec-x) * -0.5), calc(var(--vec-y) * -0.5), 50px); filter: brightness(0.9); }
+    100% { transform: scale(1) translate3d(0,0,0) rotate(0deg); filter: brightness(1); }
+}
+
+/* Critical State Shaking */
+.physics-critical { animation: shakeCritical var(--shake-intensity) infinite cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+
+@keyframes shakeCritical {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+    10%, 90% { transform: translate3d(-2px, 2px, 0) rotate(-1deg); }
+    20%, 80% { transform: translate3d(4px, -4px, 0) rotate(2deg); }
+    30%, 50%, 70% { transform: translate3d(-8px, -4px, 0) rotate(-3deg); }
+    40%, 60% { transform: translate3d(8px, 4px, 0) rotate(3deg); }
+}
+
+/* Screen Flash overlay */
+#screen-flash-fx {
+    position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: #fff; opacity: 0; pointer-events: none; z-index: 9999;
+}
+
 </style>
 </head>
 <body>
 
-<svg style="display:none;">
-    <filter id="turbulence">
-        <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="noise" />
-        <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G" />
-    </filter>
-    <filter id="turbulence-fine">
-        <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="4" result="noise" />
-        <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G" />
-    </filter>
+<svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
+    <defs>
+        <filter id="svg-noise-macro">
+            <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="15" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        <filter id="svg-noise-micro">
+            <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="5" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+    </defs>
 </svg>
 
-<div id="flash"></div>
+<div id="screen-flash-fx"></div>
 
-<div id="hud">
-    <div class="toolbar">
-        <button class="btn-fruit active" data-type="watermelon">Watermelon</button>
-        <button class="btn-fruit" data-type="apple">Apple</button>
-        <button class="btn-fruit" data-type="orange">Orange</button>
-        <button class="btn-fruit" data-type="coconut">Coconut</button>
-        <button class="btn-fruit" data-type="pumpkin">Pumpkin</button>
-        <button class="btn-fruit" data-type="pineapple">Pineapple</button>
+<svg id="hand-rig" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <g class="hand-group">
+        <path class="hand-skin" d="M40,180 C30,120 40,80 60,70 C80,60 110,65 130,80 C150,100 160,140 150,180 Z" />
+        <path class="hand-skin" d="M45,120 C20,110 10,80 15,60 C20,40 40,40 50,60 C60,80 55,100 50,115 Z" />
+        <path class="hand-skin" d="M65,75 C60,40 65,10 80,5 C95,0 100,20 95,50 C90,80 85,85 85,85 Z" />
+        <path class="hand-skin" d="M90,80 C95,40 105,5 120,5 C135,5 135,30 125,60 C115,90 110,95 110,95 Z" />
+        <path class="hand-skin" d="M115,85 C125,50 135,20 150,25 C165,30 160,60 145,85 C135,105 130,105 130,105 Z" />
+        <path class="hand-skin" d="M135,95 C150,70 165,50 180,60 C195,70 185,100 165,115 C150,125 145,120 145,120 Z" />
+        <path class="hand-line" d="M70,120 C90,130 110,120 130,100" />
+        <path class="hand-line" d="M60,140 C80,150 120,140 140,120" />
+        <path class="hand-line" d="M50,90 C60,95 70,85 70,85" />
+        <path stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.5" d="M10,10 L40,40 M190,10 L160,40 M100,-20 L100,10" />
+    </g>
+</svg>
+
+<div id="hud-layer">
+    <div id="toolbar-container">
+        <div id="fruit-selector">
+            <button class="fruit-btn active" data-id="watermelon">Watermelon</button>
+            <button class="fruit-btn" data-id="apple">Apple</button>
+            <button class="fruit-btn" data-id="orange">Orange</button>
+            <button class="fruit-btn" data-id="coconut">Coconut</button>
+            <button class="fruit-btn" data-id="pumpkin">Pumpkin</button>
+            <button class="fruit-btn" data-id="pineapple">Pineapple</button>
+        </div>
     </div>
     
-    <div id="hit-counter">00</div>
-
-    <div class="telemetry">
-        <div class="data-row"><span>Structural Integrity</span><span id="data-integrity" class="data-value">100.00%</span></div>
-        <div class="data-row"><span>Fracture Nodes</span><span id="data-nodes" class="data-value">0</span></div>
-        <div class="data-row"><span>Kinetic Energy</span><span id="data-energy" class="data-value">0.00 kJ</span></div>
-        <div id="damage-bar-bg"><div id="damage-bar-fill"></div></div>
+    <div id="telemetry-dashboard">
+        <div class="dashboard-panel">
+            <div class="data-grid">
+                <div class="data-cell"><span class="data-label">Stage Prog.</span><span class="data-value" id="val-stage">0 / 50</span></div>
+                <div class="data-cell"><span class="data-label">Struct Int.</span><span class="data-value" id="val-integrity">100.00%</span></div>
+                <div class="data-cell"><span class="data-label">Fracture Nds.</span><span class="data-value" id="val-nodes">0</span></div>
+                <div class="data-cell"><span class="data-label">Total K-Energy</span><span class="data-value" id="val-energy">0.00 kJ</span></div>
+            </div>
+            <div id="progress-container"><div id="progress-bar"></div></div>
+        </div>
     </div>
 </div>
 
-<div id="stage">
-    <div id="entity-container" class="fruit-watermelon">
-        <div class="layer layer-base"></div>
-        <div class="layer layer-texture1"></div>
-        <div class="layer layer-texture2"></div>
-        <canvas id="canvas-flesh" width="400" height="400"></canvas>
-        <canvas id="canvas-cracks" width="400" height="400"></canvas>
-        <div class="layer layer-specular"></div>
+<div id="central-counter">00</div>
+
+<div id="scene-graph">
+    <div id="target-entity-wrapper" class="fruit-watermelon">
+        <div class="entity-layer layer-base"></div>
+        <div class="entity-layer layer-detail-1"></div>
+        <div class="entity-layer layer-detail-2"></div>
+        
+        <canvas class="render-canvas" id="canvas-damage-deep" width="500" height="500"></canvas>
+        <canvas class="render-canvas" id="canvas-flesh-expose" width="500" height="500"></canvas>
+        <canvas class="render-canvas" id="canvas-surface-cracks" width="500" height="500"></canvas>
+        <canvas class="render-canvas" id="canvas-juice-splatter" width="500" height="500"></canvas>
+        
+        <div class="entity-layer layer-highlight"></div>
     </div>
 </div>
 
-<canvas id="canvas-particles"></canvas>
+<canvas id="particle-engine-layer"></canvas>
 
 <script>
-    /**
-     * ==========================================================================
-     * HYPER-DETAILED PHYSICS & RENDERING ENGINE
-     * 50 Stages of Procedural Fracturing
-     * ==========================================================================
-     */
+/**
+ * ==========================================================================================
+ * ULTIMATE HAND-SLAP FRUIT DESTRUCTOR - CORE ENGINE
+ * Physics, Rendering, Audio, and Procedural Generation Logic
+ * Over 1000+ lines of algorithmic destruction.
+ * ==========================================================================================
+ */
 
-    const CONFIG = {
-        MAX_STAGES: 50,
-        FRUIT_META: {
-            watermelon: { inner: '#ff1133', rind: '#ccffcc', juice: 'rgba(255, 17, 51, 0.8)', dark: '#0a1a0a', density: 1.2 },
-            apple:      { inner: '#ffffe6', rind: '#cccc99', juice: 'rgba(255, 255, 230, 0.7)', dark: '#220000', density: 1.5 },
-            orange:     { inner: '#ffaa00', rind: '#ffffea', juice: 'rgba(255, 170, 0, 0.9)', dark: '#441100', density: 0.8 },
-            coconut:    { inner: '#ffffff', rind: '#593311', juice: 'rgba(255, 255, 255, 0.9)', dark: '#000000', density: 2.5 },
-            pumpkin:    { inner: '#ff9933', rind: '#cc4400', juice: 'rgba(255, 153, 51, 0.8)', dark: '#220500', density: 1.0 },
-            pineapple:  { inner: '#ffff66', rind: '#cca300', juice: 'rgba(255, 255, 102, 0.8)', dark: '#1a1a00', density: 1.3 }
+// -------------------------------------------------------------------------
+// 1. GLOBAL CONFIGURATION & DATA DICTIONARY
+// -------------------------------------------------------------------------
+const ENGINE_CONFIG = {
+    MAX_STAGES: 50,
+    ENTITY_SIZE: 500,
+    PARTICLE_LIMIT: 2000,
+    FPS: 60
+};
+
+const FRUIT_MATRICES = {
+    watermelon: {
+        density: 1.2, brittleness: 0.4, juiciness: 0.9,
+        colors: { skinDark: '#1a4720', skinLight: '#5dbb63', fleshOut: '#ff8899', fleshIn: '#ff1133', juice: 'rgba(255,17,51,0.85)', seed: '#0a0a0a' }
+    },
+    apple: {
+        density: 1.6, brittleness: 0.7, juiciness: 0.6,
+        colors: { skinDark: '#8b0000', skinLight: '#ff3b30', fleshOut: '#fffdd0', fleshIn: '#f8f4e6', juice: 'rgba(248,244,230,0.7)', seed: '#221100' }
+    },
+    orange: {
+        density: 0.9, brittleness: 0.2, juiciness: 1.0,
+        colors: { skinDark: '#cc5500', skinLight: '#ffaa00', fleshOut: '#ffffe0', fleshIn: '#ff9900', juice: 'rgba(255,153,0,0.9)', seed: '#ffffff' }
+    },
+    coconut: {
+        density: 3.5, brittleness: 0.9, juiciness: 0.4,
+        colors: { skinDark: '#2a1608', skinLight: '#6b4423', fleshOut: '#e6e6e6', fleshIn: '#ffffff', juice: 'rgba(255,255,255,0.95)', seed: '#000000' }
+    },
+    pumpkin: {
+        density: 1.1, brittleness: 0.5, juiciness: 0.5,
+        colors: { skinDark: '#b33c00', skinLight: '#ff7f00', fleshOut: '#ffaa00', fleshIn: '#ff9933', juice: 'rgba(255,153,51,0.8)', seed: '#e6ccb3' }
+    },
+    pineapple: {
+        density: 1.4, brittleness: 0.6, juiciness: 0.8,
+        colors: { skinDark: '#806000', skinLight: '#ffd900', fleshOut: '#ffff99', fleshIn: '#ffe680', juice: 'rgba(255,230,128,0.8)', seed: '#332200' }
+    }
+};
+
+// -------------------------------------------------------------------------
+// 2. MATH & PHYSICS UTILITIES
+// -------------------------------------------------------------------------
+class Vector2D {
+    constructor(x, y) { this.x = x; this.y = y; }
+    add(v) { this.x += v.x; this.y += v.y; return this; }
+    sub(v) { this.x -= v.x; this.y -= v.y; return this; }
+    mult(n) { this.x *= n; this.y *= n; return this; }
+    mag() { return Math.sqrt(this.x * this.x + this.y * this.y); }
+    normalize() { let m = this.mag(); if(m!==0){this.x/=m; this.y/=m;} return this; }
+    copy() { return new Vector2D(this.x, this.y); }
+    static distance(v1, v2) { return Math.hypot(v2.x - v1.x, v2.y - v1.y); }
+    static random(min, max) { return new Vector2D(Math.random()*(max-min)+min, Math.random()*(max-min)+min); }
+    static fromAngle(angle, length) { return new Vector2D(Math.cos(angle)*length, Math.sin(angle)*length); }
+}
+
+function randRange(min, max) { return Math.random() * (max - min) + min; }
+function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+function lerp(start, end, amt) { return (1-amt)*start+amt*end; }
+
+// -------------------------------------------------------------------------
+// 3. AUDIO SYNTHESIS ENGINE (WEB AUDIO API)
+// -------------------------------------------------------------------------
+class SynthEngine {
+    constructor() {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.value = 0.8;
+        this.masterGain.connect(this.ctx.destination);
+    }
+
+    resume() { if(this.ctx.state === 'suspended') this.ctx.resume(); }
+
+    createNoiseBuffer(duration) {
+        const bufferSize = this.ctx.sampleRate * duration;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for(let i=0; i<bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        return buffer;
+    }
+
+    playSlap() {
+        this.resume();
+        const t = this.ctx.currentTime;
+        
+        // High frequency slap transient
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800, t);
+        osc.frequency.exponentialRampToValueAtTime(100, t + 0.05);
+        gain.gain.setValueAtTime(1, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+        osc.connect(gain); gain.connect(this.masterGain);
+        osc.start(t); osc.stop(t + 0.05);
+
+        // Low frequency thud
+        const osc2 = this.ctx.createOscillator();
+        const gain2 = this.ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(150, t);
+        osc2.frequency.exponentialRampToValueAtTime(40, t + 0.15);
+        gain2.gain.setValueAtTime(0.8, t);
+        gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+        osc2.connect(gain2); gain2.connect(this.masterGain);
+        osc2.start(t); osc2.stop(t + 0.15);
+    }
+
+    playFracture(stage, density, brittleness) {
+        this.resume();
+        const t = this.ctx.currentTime;
+        
+        if (brittleness > 0.5 || stage > 15) {
+            // Crack/Snap sound
+            const noiseSrc = this.ctx.createBufferSource();
+            noiseSrc.buffer = this.createNoiseBuffer(0.2);
+            
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = 1000 + (stage * 50);
+            
+            const gain = this.ctx.createGain();
+            gain.gain.setValueAtTime(0.5 * brittleness, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+            
+            noiseSrc.connect(filter); filter.connect(gain); gain.connect(this.masterGain);
+            noiseSrc.start(t);
         }
-    };
 
-    // DOM Caching
-    const elContainer = document.getElementById('entity-container');
-    const elCounter = document.getElementById('hit-counter');
-    const elIntegrity = document.getElementById('data-integrity');
-    const elNodes = document.getElementById('data-nodes');
-    const elEnergy = document.getElementById('data-energy');
-    const elBar = document.getElementById('damage-bar-fill');
-    const elFlash = document.getElementById('flash');
-    const btns = document.querySelectorAll('.btn-fruit');
-    
-    // Canvas Caching
-    const cvsCracks = document.getElementById('canvas-cracks');
-    const ctxCracks = cvsCracks.getContext('2d', { willReadFrequently: true });
-    const cvsFlesh = document.getElementById('canvas-flesh');
-    const ctxFlesh = cvsFlesh.getContext('2d');
-    const cvsParticles = document.getElementById('canvas-particles');
-    const ctxParticles = cvsParticles.getContext('2d');
-
-    // Engine State
-    let state = {
-        hits: 0,
-        type: 'watermelon',
-        nodes: [],
-        particles: [],
-        exploded: false,
-        energyTotal: 0,
-        lastX: 200, lastY: 200
-    };
-
-    // --- AUDIO SYNTHESIS (No external assets) ---
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const actx = new AudioContext();
-
-    const Synth = {
-        playImpact(stage, density) {
-            if (actx.state === 'suspended') actx.resume();
-            const t = actx.currentTime;
-            
-            // Low thud
-            const osc1 = actx.createOscillator();
-            const g1 = actx.createGain();
-            osc1.type = 'sine';
-            osc1.frequency.setValueAtTime(150 * density, t);
-            osc1.frequency.exponentialRampToValueAtTime(10, t + 0.2);
-            g1.gain.setValueAtTime(1, t);
-            g1.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-            osc1.connect(g1); g1.connect(actx.destination);
-            osc1.start(t); osc1.stop(t + 0.2);
-
-            // High crack (increases with stage)
-            if (stage > 10) {
-                const osc2 = actx.createOscillator();
-                const g2 = actx.createGain();
-                osc2.type = 'sawtooth';
-                osc2.frequency.setValueAtTime(1000 + (stage * 50), t);
-                osc2.frequency.exponentialRampToValueAtTime(100, t + 0.1);
-                g2.gain.setValueAtTime((stage/50) * 0.5, t);
-                g2.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-                
-                // Add distortion
-                const waveShaper = actx.createWaveShaper();
-                waveShaper.curve = this.makeDistortionCurve(400);
-                waveShaper.oversample = '4x';
-                
-                osc2.connect(waveShaper); waveShaper.connect(g2); g2.connect(actx.destination);
-                osc2.start(t); osc2.stop(t + 0.1);
-            }
-        },
-        playExplosion() {
-            const t = actx.currentTime;
-            const bufferSize = actx.sampleRate * 2; 
-            const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-            
-            const noise = actx.createBufferSource();
-            noise.buffer = buffer;
-            
-            const filter = actx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(1000, t);
-            filter.frequency.exponentialRampToValueAtTime(10, t + 1.5);
-            
-            const gain = actx.createGain();
-            gain.gain.setValueAtTime(1, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
-            
-            noise.connect(filter); filter.connect(gain); gain.connect(actx.destination);
-            noise.start(t);
-        },
-        makeDistortionCurve(amount) {
-            const k = typeof amount === 'number' ? amount : 50,
-            n_samples = 44100, curve = new Float32Array(n_samples), deg = Math.PI / 180;
-            for (let i = 0; i < n_samples; ++i ) {
-                const x = i * 2 / n_samples - 1;
-                curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) );
-            }
-            return curve;
+        // Deep structural groan for dense fruits
+        if (density > 1.2 && stage % 3 === 0) {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(80 - (stage*0.5), t);
+            osc.frequency.linearRampToValueAtTime(30, t + 0.3);
+            gain.gain.setValueAtTime(0.3, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+            osc.connect(gain); gain.connect(this.masterGain);
+            osc.start(t); osc.stop(t + 0.3);
         }
-    };
+    }
 
-    // --- PROCEDURAL FRACTURE ENGINE ---
-    function initFractures() {
-        ctxCracks.clearRect(0,0,400,400);
-        ctxFlesh.clearRect(0,0,400,400);
-        state.nodes = [];
-        for(let i=0; i<3; i++) {
-            state.nodes.push({
-                x: 200 + (Math.random()*40-20), y: 200 + (Math.random()*40-20),
-                vx: 0, vy: 0, mass: 1, type: 'primary',
-                angle: Math.random() * Math.PI * 2,
-                depth: 0, active: true, width: 1.5
+    playExplosion() {
+        this.resume();
+        const t = this.ctx.currentTime;
+        
+        // Massive noise burst
+        const noiseSrc = this.ctx.createBufferSource();
+        noiseSrc.buffer = this.createNoiseBuffer(2.0);
+        
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2000, t);
+        filter.frequency.exponentialRampToValueAtTime(50, t + 1.5);
+        
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(1.5, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 2.0);
+        
+        noiseSrc.connect(filter); filter.connect(gain); gain.connect(this.masterGain);
+        noiseSrc.start(t);
+
+        // Sub-bass boom
+        const osc = this.ctx.createOscillator();
+        const gain2 = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(100, t);
+        osc.frequency.exponentialRampToValueAtTime(10, t + 1.0);
+        gain2.gain.setValueAtTime(1.0, t);
+        gain2.gain.exponentialRampToValueAtTime(0.01, t + 1.0);
+        osc.connect(gain2); gain2.connect(this.masterGain);
+        osc.start(t); osc.stop(t + 1.0);
+    }
+}
+const Audio = new SynthEngine();
+
+// -------------------------------------------------------------------------
+// 4. PARTICLE PHYSICS SYSTEM
+// -------------------------------------------------------------------------
+class Particle {
+    constructor(x, y, type, meta, isExplosion) {
+        this.pos = new Vector2D(x, y);
+        const angle = randRange(0, Math.PI * 2);
+        const speed = randRange(2, 15) * (isExplosion ? 5 : 1);
+        this.vel = Vector2D.fromAngle(angle, speed);
+        this.vel.y -= isExplosion ? 15 : 5; // Initial upward burst
+        
+        this.acc = new Vector2D(0, 0.5); // Gravity
+        this.life = 1.0;
+        this.decay = randRange(0.01, 0.03) / (isExplosion ? 0.5 : 1);
+        this.type = type; // 'chunk', 'juice', 'seed'
+        
+        this.radius = type === 'juice' ? randRange(2, 8) : randRange(4, 12);
+        if(isExplosion) this.radius *= 1.5;
+        
+        this.rotation = randRange(0, 360);
+        this.rotSpeed = randRange(-15, 15);
+        
+        // Assign colors based on type and fruit meta
+        if(type === 'juice') {
+            this.color = meta.colors.juice;
+        } else if(type === 'seed') {
+            this.color = meta.colors.seed;
+            this.radius *= 0.5;
+        } else {
+            const rand = Math.random();
+            if(rand < 0.3) this.color = meta.colors.skinDark;
+            else if(rand < 0.6) this.color = meta.colors.fleshOut;
+            else this.color = meta.colors.fleshIn;
+        }
+    }
+
+    update() {
+        this.vel.add(this.acc);
+        this.pos.add(this.vel);
+        this.rotation += this.rotSpeed;
+        this.life -= this.decay;
+    }
+
+    draw(ctx) {
+        if(this.life <= 0) return;
+        ctx.save();
+        ctx.translate(this.pos.x, this.pos.y);
+        ctx.rotate(this.rotation * Math.PI / 180);
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.fillStyle = this.color;
+        
+        if (this.type === 'juice') {
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (this.type === 'seed') {
+            ctx.beginPath();
+            ctx.ellipse(0, 0, this.radius, this.radius * 0.6, 0, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            ctx.fillRect(-this.radius/2, -this.radius/2, this.radius, this.radius);
+            ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-this.radius/2, -this.radius/2, this.radius, this.radius);
+        }
+        ctx.restore();
+    }
+}
+
+class ParticleEngine {
+    constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d', { alpha: true });
+        this.particles = [];
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+    }
+
+    resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    }
+
+    emit(x, y, amount, meta, isExplosion = false) {
+        for(let i=0; i<amount; i++) {
+            if(this.particles.length > ENGINE_CONFIG.PARTICLE_LIMIT) this.particles.shift();
+            
+            let rand = Math.random();
+            let type = 'chunk';
+            if(rand < meta.juiciness * 0.7) type = 'juice';
+            else if(rand > 0.9) type = 'seed';
+            
+            this.particles.push(new Particle(x, y, type, meta, isExplosion));
+        }
+    }
+
+    updateAndRender() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            let p = this.particles[i];
+            p.update();
+            p.draw(this.ctx);
+            if (p.life <= 0 || p.pos.y > this.canvas.height + 100) {
+                this.particles.splice(i, 1);
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------------------
+// 5. PROCEDURAL FRACTURE & DEFORMATION ENGINE
+// -------------------------------------------------------------------------
+class FractureEngine {
+    constructor() {
+        this.cvsDeep = document.getElementById('canvas-damage-deep');
+        this.ctxDeep = this.cvsDeep.getContext('2d', { willReadFrequently: true });
+        
+        this.cvsFlesh = document.getElementById('canvas-flesh-expose');
+        this.ctxFlesh = this.cvsFlesh.getContext('2d');
+        
+        this.cvsCracks = document.getElementById('canvas-surface-cracks');
+        this.ctxCracks = this.cvsCracks.getContext('2d');
+        
+        this.cvsJuice = document.getElementById('canvas-juice-splatter');
+        this.ctxJuice = this.cvsJuice.getContext('2d');
+
+        this.size = ENGINE_CONFIG.ENTITY_SIZE;
+        this.center = new Vector2D(this.size/2, this.size/2);
+        this.radius = this.size/2 - 10;
+        
+        this.nodes = [];
+    }
+
+    reset() {
+        this.ctxDeep.clearRect(0,0,this.size,this.size);
+        this.ctxFlesh.clearRect(0,0,this.size,this.size);
+        this.ctxCracks.clearRect(0,0,this.size,this.size);
+        this.ctxJuice.clearRect(0,0,this.size,this.size);
+        this.nodes = [];
+        
+        // Seed initial deep stress points
+        for(let i=0; i<5; i++) {
+            this.nodes.push({
+                pos: new Vector2D(this.center.x + randRange(-50,50), this.center.y + randRange(-50,50)),
+                angle: randRange(0, Math.PI*2),
+                depth: 0, active: true, type: 'core', width: 2
             });
         }
     }
 
-    function calculateFracture(x, y, stage) {
-        const meta = CONFIG.FRUIT_META[state.type];
-        const cx = 200, cy = 200, r = 190;
+    processImpact(x, y, stage, meta) {
+        // Transform screen coords to local canvas coords
+        const rect = this.cvsCracks.getBoundingClientRect();
+        const localX = (x - rect.left) * (this.size / rect.width);
+        const localY = (y - rect.top) * (this.size / rect.height);
         
-        // Add impact node
-        state.nodes.push({
-            x: x, y: y, angle: Math.atan2(y-cy, x-cx) + Math.PI,
-            depth: 0, active: true, width: 2 + (stage*0.1), type: 'impact'
-        });
+        const impactPos = new Vector2D(localX, localY);
+        
+        // Add new primary fracture nodes at impact site
+        let newNodesCount = Math.floor(stage / 5) + 3;
+        for(let i=0; i<newNodesCount; i++) {
+            this.nodes.push({
+                pos: impactPos.copy(),
+                angle: randRange(0, Math.PI*2),
+                depth: 0, active: true, type: 'impact', width: 3 + (stage*0.1)
+            });
+        }
 
-        let newNodes = [];
-        ctxCracks.lineCap = 'round';
-        ctxCracks.lineJoin = 'bevel';
-
-        state.nodes.forEach(node => {
+        // Process Graph Propagation
+        let newGraphNodes = [];
+        this.ctxCracks.lineCap = 'round';
+        this.ctxCracks.lineJoin = 'miter';
+        this.ctxFlesh.lineCap = 'round';
+        
+        this.nodes.forEach(node => {
             if(!node.active) return;
 
-            // Algorithm for crack propagation
-            let segLength = 8 + (Math.random() * 5 * (stage/10));
-            if(node.type === 'impact') segLength *= 2;
+            const segLen = randRange(10, 25) * meta.brittleness * (1 + (stage*0.02));
+            const nextPos = new Vector2D(
+                node.pos.x + Math.cos(node.angle) * segLen,
+                node.pos.y + Math.sin(node.angle) * segLen
+            );
 
-            const nx = node.x + Math.cos(node.angle) * segLength;
-            const ny = node.y + Math.sin(node.angle) * segLength;
+            // Bounds check
+            if (Vector2D.distance(this.center, nextPos) > this.radius) {
+                node.active = false;
+                return;
+            }
 
-            // Boundary check
-            if (Math.hypot(nx-cx, ny-cy) > r) { node.active = false; return; }
-
-            // Render Crack Line (Dark)
-            ctxCracks.beginPath();
-            ctxCracks.moveTo(node.x, node.y);
-            ctxCracks.lineTo(nx, ny);
-            ctxCracks.lineWidth = node.width + (stage*0.05);
-            ctxCracks.strokeStyle = meta.dark;
-            
-            // Add depth via shadow at higher stages
+            // 1. Draw Surface Cracks
+            this.ctxCracks.beginPath();
+            this.ctxCracks.moveTo(node.pos.x, node.pos.y);
+            this.ctxCracks.lineTo(nextPos.x, nextPos.y);
+            this.ctxCracks.lineWidth = node.width + (stage*0.08);
+            this.ctxCracks.strokeStyle = meta.colors.skinDark;
             if(stage > 20) {
-                ctxCracks.shadowBlur = 4;
-                ctxCracks.shadowColor = '#000';
-            } else {
-                ctxCracks.shadowBlur = 0;
+                this.ctxCracks.shadowBlur = stage * 0.2;
+                this.ctxCracks.shadowColor = '#000';
             }
-            ctxCracks.stroke();
+            this.ctxCracks.stroke();
 
-            // Render Flesh Exposure (Stage > 15)
-            if (stage > 15 && Math.random() < (stage/50)) {
-                ctxFlesh.beginPath();
-                ctxFlesh.moveTo(node.x, node.y);
-                ctxFlesh.lineTo(nx, ny);
-                ctxFlesh.lineWidth = (node.width * 0.8) + (stage*0.08);
+            // 2. Draw Flesh Exposure (Deep Wounds)
+            if (stage > 15 && Math.random() < meta.brittleness) {
+                this.ctxFlesh.beginPath();
+                this.ctxFlesh.moveTo(node.pos.x, node.pos.y);
+                this.ctxFlesh.lineTo(nextPos.x, nextPos.y);
+                this.ctxFlesh.lineWidth = (node.width * 1.5) + (stage*0.15);
                 
-                // Multi-layered flesh rendering
-                const grad = ctxFlesh.createLinearGradient(node.x, node.y, nx, ny);
-                grad.addColorStop(0, meta.rind);
-                grad.addColorStop(0.5, meta.inner);
-                grad.addColorStop(1, meta.inner);
+                // Gradient mapping depth of wound
+                const grad = this.ctxFlesh.createLinearGradient(node.pos.x, node.pos.y, nextPos.x, nextPos.y);
+                grad.addColorStop(0, meta.colors.fleshOut);
+                grad.addColorStop(0.5, meta.colors.fleshIn);
+                grad.addColorStop(1, meta.colors.skinDark);
                 
-                ctxFlesh.strokeStyle = grad;
-                ctxFlesh.shadowBlur = 10 + (stage*0.5);
-                ctxFlesh.shadowColor = meta.inner;
-                ctxFlesh.stroke();
+                this.ctxFlesh.strokeStyle = grad;
+                this.ctxFlesh.shadowBlur = 10;
+                this.ctxFlesh.shadowColor = meta.colors.fleshIn;
+                this.ctxFlesh.stroke();
             }
 
-            // Update node
-            node.x = nx; node.y = ny; node.depth++;
+            // 3. Draw Deep Structural Damage (Bruising)
+            if (stage > 5 && node.type === 'core') {
+                this.ctxDeep.beginPath();
+                this.ctxDeep.arc(nextPos.x, nextPos.y, randRange(10, 30), 0, Math.PI*2);
+                this.ctxDeep.fillStyle = `rgba(0,0,0,${0.05 * meta.density})`;
+                this.ctxDeep.fill();
+            }
 
-            // Bifurcation logic
-            let splitChance = 0.15 + (stage*0.01);
-            if (node.type === 'impact') splitChance = 0.8; // Impacts always split fast
+            // Update Node
+            node.pos = nextPos;
+            node.depth++;
 
-            if (Math.random() < splitChance && node.depth < 25) {
-                const spread = (Math.random() * 2) - 1; // -1 to 1 rad
-                newNodes.push({
-                    x: nx, y: ny, angle: node.angle + spread,
-                    depth: node.depth, active: true, width: node.width * 0.7, type: 'branch'
+            // Branching Logic
+            let splitChance = 0.2 + (stage * 0.01) * meta.brittleness;
+            if (node.type === 'impact') splitChance *= 2;
+
+            if (Math.random() < splitChance && node.depth < 20) {
+                const spread = randRange(-1, 1);
+                newGraphNodes.push({
+                    pos: node.pos.copy(),
+                    angle: node.angle + spread,
+                    depth: node.depth,
+                    active: true,
+                    type: 'branch',
+                    width: node.width * 0.8
                 });
-                node.angle -= spread * 0.5;
+                node.angle -= spread * 0.5; // Deflect main branch
             }
 
-            if (Math.random() < 0.1) node.active = false;
-            if (node.type === 'impact') node.active = false; // Impact nodes are single-generation seeds
+            // Death chance
+            if (Math.random() < 0.15) node.active = false;
         });
 
-        state.nodes = state.nodes.concat(newNodes);
-    }
+        this.nodes = this.nodes.concat(newGraphNodes);
 
-    // --- PARTICLE PHYSICS SYSTEM ---
-    class Particle {
-        constructor(x, y, meta, isExplosion=false) {
-            this.x = x; this.y = y;
-            const a = Math.random() * Math.PI * 2;
-            const v = (Math.random() * 15 + 5) * (isExplosion ? 4 : 1);
-            this.vx = Math.cos(a) * v;
-            this.vy = Math.sin(a) * v - (isExplosion ? 15 : 5);
-            this.life = 1.0;
-            this.decay = Math.random() * 0.02 + (isExplosion ? 0.005 : 0.02);
-            this.g = 0.6;
-            this.r = Math.random() * (isExplosion ? 12 : 5) + 2;
-            this.type = Math.random() > 0.4 ? 'juice' : 'chunk';
-            
-            if(this.type === 'juice') this.color = meta.juice;
-            else this.color = Math.random()>0.5 ? meta.inner : meta.rind;
-            
-            this.rot = Math.random() * 360;
-            this.rotV = (Math.random()-0.5) * 20;
-        }
-        update() {
-            this.vy += this.g;
-            this.x += this.vx; this.y += this.vy;
-            this.rot += this.rotV;
-            this.life -= this.decay;
-        }
-        draw(ctx) {
-            ctx.save();
-            ctx.translate(this.x, this.y);
-            ctx.rotate(this.rot * Math.PI/180);
-            ctx.globalAlpha = Math.max(0, this.life);
-            ctx.fillStyle = this.color;
-            
-            if(this.type==='juice') {
-                ctx.beginPath(); ctx.arc(0,0,this.r,0,Math.PI*2); ctx.fill();
-            } else {
-                ctx.fillRect(-this.r/2, -this.r/2, this.r, this.r);
-                ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-                ctx.strokeRect(-this.r/2, -this.r/2, this.r, this.r);
+        // 4. Draw Surface Splatters (Juice)
+        if (stage > 25 && Math.random() < meta.juiciness) {
+            for(let i=0; i<3; i++) {
+                const spX = impactPos.x + randRange(-40, 40);
+                const spY = impactPos.y + randRange(-40, 40);
+                const r = randRange(5, 20) * meta.juiciness;
+                
+                this.ctxJuice.beginPath();
+                this.ctxJuice.arc(spX, spY, r, 0, Math.PI*2);
+                this.ctxJuice.fillStyle = meta.colors.juice;
+                this.ctxJuice.fill();
+                
+                // Drips
+                this.ctxJuice.beginPath();
+                this.ctxJuice.moveTo(spX, spY);
+                this.ctxJuice.quadraticCurveTo(spX + randRange(-10,10), spY + randRange(20,50), spX + randRange(-5,5), spY + randRange(40,80));
+                this.ctxJuice.lineWidth = r * 0.5;
+                this.ctxJuice.strokeStyle = meta.colors.juice;
+                this.ctxJuice.lineCap = 'round';
+                this.ctxJuice.stroke();
             }
-            ctx.restore();
         }
     }
+}
 
-    function resizeCanvas() {
-        cvsParticles.width = window.innerWidth;
-        cvsParticles.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+// -------------------------------------------------------------------------
+// 6. MAIN GAME CONTROLLER & UI BINDINGS
+// -------------------------------------------------------------------------
+class GameController {
+    constructor() {
+        this.state = {
+            stage: 0,
+            energy: 0,
+            fruitType: 'watermelon',
+            isExploded: false
+        };
 
-    function loopParticles() {
-        ctxParticles.clearRect(0,0,cvsParticles.width, cvsParticles.height);
-        for(let i=state.particles.length-1; i>=0; i--) {
-            let p = state.particles[i];
-            p.update(); p.draw(ctxParticles);
-            if(p.life <= 0 || p.y > cvsParticles.height+50) state.particles.splice(i,1);
-        }
-        requestAnimationFrame(loopParticles);
-    }
-    loopParticles();
-
-    // --- CORE LOGIC ---
-    function updateTelemetry() {
-        const pct = (state.hits / CONFIG.MAX_STAGES) * 100;
-        const intg = Math.max(0, 100 - pct).toFixed(2);
+        // Sub-systems
+        this.fx = new ParticleEngine('particle-engine-layer');
+        this.fracture = new FractureEngine();
         
-        elCounter.innerText = state.hits.toString().padStart(2, '0');
-        elIntegrity.innerText = `${intg}%`;
-        elNodes.innerText = state.nodes.length;
-        elEnergy.innerText = state.energyTotal.toFixed(2) + ' kJ';
+        // DOM Elements
+        this.elWrapper = document.getElementById('target-entity-wrapper');
+        this.elHand = document.getElementById('hand-rig');
+        this.elFlash = document.getElementById('screen-flash-fx');
+        this.elCounter = document.getElementById('central-counter');
         
-        elBar.style.width = `${pct}%`;
+        // Dashboard Elements
+        this.dashStage = document.getElementById('val-stage');
+        this.dashIntegrity = document.getElementById('val-integrity');
+        this.dashNodes = document.getElementById('val-nodes');
+        this.dashEnergy = document.getElementById('val-energy');
+        this.progressBar = document.getElementById('progress-bar');
         
-        // CSS State Triggers
-        const meta = CONFIG.FRUIT_META[state.type];
-        if (state.hits > 25) {
-            document.documentElement.style.setProperty('--ui-accent', meta.inner);
-        } else {
-            document.documentElement.style.setProperty('--ui-accent', '#ff0044');
-        }
-
-        if (state.hits > 40) {
-            elContainer.classList.add('anim-shake');
-            elContainer.style.setProperty('--shake-dur', `${0.3 - (state.hits-40)*0.02}s`);
-            elContainer.classList.add('anim-pulse');
-        } else {
-            elContainer.classList.remove('anim-shake', 'anim-pulse');
-        }
+        this.bindEvents();
+        this.startLoop();
     }
 
-    function triggerExplosion() {
-        state.exploded = true;
-        Synth.playExplosion();
+    bindEvents() {
+        const handleInteraction = (e) => {
+            e.preventDefault();
+            if (this.state.isExploded) return;
+            
+            let clientX, clientY;
+            if(e.type.includes('mouse')) { clientX = e.clientX; clientY = e.clientY; }
+            else if(e.type.includes('touch')) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+            
+            this.executeHit(clientX, clientY);
+        };
+
+        const opts = { passive: false };
+        // Bind to document to allow fast clicking anywhere over the entity area
+        document.addEventListener('mousedown', (e) => {
+            if(e.target.closest('#toolbar-container')) return;
+            handleInteraction(e);
+        }, opts);
+        document.addEventListener('touchstart', (e) => {
+            if(e.target.closest('#toolbar-container')) return;
+            handleInteraction(e);
+        }, opts);
+
+        // Menu Bindings
+        document.querySelectorAll('.fruit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.fruit-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                this.switchFruit(e.target.getAttribute('data-id'));
+            });
+        });
+    }
+
+    triggerHandAnimation(x, y) {
+        // Clone the hand to allow rapid overlapping animations
+        const newHand = this.elHand.cloneNode(true);
+        newHand.id = '';
+        document.body.appendChild(newHand);
         
-        const rect = elContainer.getBoundingClientRect();
+        // Position roughly relative to click
+        newHand.style.left = `${x - 100}px`;
+        newHand.style.top = `${y - 100}px`;
+        
+        // Randomize slight rotation for variety
+        const rotOffset = randRange(-15, 15);
+        newHand.style.setProperty('--target-rot', `${rotOffset}deg`);
+        
+        // Add animation class
+        newHand.classList.add('anim-slap-execute');
+        
+        // Cleanup
+        setTimeout(() => newHand.remove(), 200);
+    }
+
+    executeHit(x, y) {
+        if(this.state.stage >= ENGINE_CONFIG.MAX_STAGES) return;
+
+        this.state.stage++;
+        const meta = FRUIT_MATRICES[this.state.fruitType];
+        
+        // Physics Calculations
+        const impactForce = randRange(15, 30) * meta.density;
+        this.state.energy += impactForce;
+        
+        // Audio & Visual Execution
+        Audio.playSlap();
+        Audio.playFracture(this.state.stage, meta.density, meta.brittleness);
+        this.triggerHandAnimation(x, y);
+        
+        // Entity Jolt CSS
+        this.elWrapper.classList.remove('physics-impact');
+        void this.elWrapper.offsetWidth; // Force reflow
+        
+        const rect = this.elWrapper.getBoundingClientRect();
         const cx = rect.left + rect.width/2;
         const cy = rect.top + rect.height/2;
-        const meta = CONFIG.FRUIT_META[state.type];
+        const dirX = (cx - x) * 0.1;
+        const dirY = (cy - y) * 0.1;
+        
+        this.elWrapper.style.setProperty('--vec-x', `${dirX}px`);
+        this.elWrapper.style.setProperty('--vec-y', `${dirY}px`);
+        this.elWrapper.style.setProperty('--vec-rot', `${randRange(-5, 5)}`);
+        this.elWrapper.classList.add('physics-impact');
 
-        // Screen Flash
-        elFlash.style.transition = 'none';
-        elFlash.style.opacity = '1';
-        elFlash.style.background = meta.inner;
+        // Advanced Logic
+        this.fracture.processImpact(x, y, this.state.stage, meta);
+        
+        // Particle Emission
+        const emitAmt = Math.floor(this.state.stage / 2) + 5;
+        this.fx.emit(x, y, emitAmt, meta, false);
+
+        this.updateHUD();
+
+        if (this.state.stage >= ENGINE_CONFIG.MAX_STAGES) {
+            this.triggerExplosion();
+        }
+    }
+
+    updateHUD() {
+        const pct = (this.state.stage / ENGINE_CONFIG.MAX_STAGES) * 100;
+        const integrity = Math.max(0, 100 - pct).toFixed(2);
+        
+        this.dashStage.innerText = `${this.state.stage} / ${ENGINE_CONFIG.MAX_STAGES}`;
+        this.dashIntegrity.innerText = `${integrity}%`;
+        this.dashNodes.innerText = this.fracture.nodes.length;
+        this.dashEnergy.innerText = `${this.state.energy.toFixed(2)} kJ`;
+        
+        this.progressBar.style.width = `${pct}%`;
+        
+        // Center Counter styling
+        this.elCounter.innerText = this.state.stage.toString().padStart(2, '0');
+        const meta = FRUIT_MATRICES[this.state.fruitType];
+        
+        if (pct > 75) {
+            this.elCounter.style.color = meta.colors.fleshIn;
+            this.elCounter.style.opacity = '0.4';
+            
+            // Trigger critical shaking
+            this.elWrapper.classList.add('physics-critical');
+            this.elWrapper.style.setProperty('--shake-intensity', `${0.4 - (pct-75)*0.01}s`);
+            
+            // Adjust master CSS colors to reflect critical damage
+            document.documentElement.style.setProperty('--color-accent-alt', meta.colors.fleshIn);
+            document.documentElement.style.setProperty('--color-grid-line', `rgba(255,0,0,0.1)`);
+        } else {
+            this.elCounter.style.color = 'rgba(255, 255, 255, 0.03)';
+            this.elCounter.style.opacity = '1';
+            this.elWrapper.classList.remove('physics-critical');
+            document.documentElement.style.setProperty('--color-accent-alt', '#00ffcc');
+            document.documentElement.style.setProperty('--color-grid-line', `rgba(40, 200, 255, 0.05)`);
+        }
+    }
+
+    triggerExplosion() {
+        this.state.isExploded = true;
+        const meta = FRUIT_MATRICES[this.state.fruitType];
+        
+        Audio.playExplosion();
+        
+        // Screen Flash Effect
+        this.elFlash.style.transition = 'none';
+        this.elFlash.style.opacity = '1';
+        this.elFlash.style.background = meta.colors.fleshIn;
         setTimeout(() => {
-            elFlash.style.transition = 'opacity 1.5s ease-out';
-            elFlash.style.opacity = '0';
+            this.elFlash.style.transition = 'opacity 2s cubic-bezier(0.1, 0.9, 0.2, 1)';
+            this.elFlash.style.opacity = '0';
         }, 50);
 
         // Hide Entity
-        elContainer.style.display = 'none';
+        this.elWrapper.style.display = 'none';
 
         // Massive Particle Burst
-        for(let i=0; i<400; i++) {
-            state.particles.push(new Particle(cx, cy, meta, true));
+        const rect = this.elWrapper.getBoundingClientRect();
+        const cx = rect.left + rect.width/2;
+        const cy = rect.top + rect.height/2;
+        this.fx.emit(cx, cy, 600, meta, true);
+
+        // Auto Restart Sequence
+        setTimeout(() => this.resetGame(), 3500);
+    }
+
+    switchFruit(type) {
+        if(this.state.stage > 0 && !this.state.isExploded) {
+            // Visual purge
+            this.fx.particles = [];
         }
-
-        // Auto Reboot
-        setTimeout(() => {
-            resetEngine();
-        }, 3000);
-    }
-
-    function handleInput(x, y) {
-        if(state.exploded || state.hits >= CONFIG.MAX_STAGES) return;
-
-        state.hits++;
-        const meta = CONFIG.FRUIT_META[state.type];
         
-        // Telemetry Math
-        const impactEnergy = (Math.random() * 5 + 10) * meta.density;
-        state.energyTotal += impactEnergy;
+        this.state.fruitType = type;
+        this.resetGame();
+    }
 
-        Synth.playImpact(state.hits, meta.density);
+    resetGame() {
+        this.state.stage = 0;
+        this.state.energy = 0;
+        this.state.isExploded = false;
         
-        // Visual Hit Response
-        elContainer.classList.remove('anim-impact');
-        void elContainer.offsetWidth; // Force reflow
-        elContainer.classList.add('anim-impact');
-
-        // Map screen coords to local coords
-        const rect = elContainer.getBoundingClientRect();
-        const lx = x - rect.left;
-        const ly = y - rect.top;
-
-        calculateFracture(lx, ly, state.hits);
-        updateTelemetry();
-
-        // Emit local particles
-        const px = x; const py = y;
-        const amt = Math.floor(state.hits / 3) + 2;
-        for(let i=0; i<amt; i++) state.particles.push(new Particle(px, py, meta, false));
-
-        if(state.hits >= CONFIG.MAX_STAGES) triggerExplosion();
+        // Reset DOM
+        this.elWrapper.style.display = 'block';
+        this.elWrapper.className = `fruit-${this.state.fruitType}`;
+        this.elWrapper.classList.remove('physics-critical', 'physics-impact');
+        
+        this.fracture.reset();
+        this.updateHUD();
     }
 
-    function resetEngine() {
-        state.hits = 0;
-        state.exploded = false;
-        state.energyTotal = 0;
-        elContainer.style.display = 'block';
-        elContainer.className = `fruit-${state.type}`;
-        initFractures();
-        updateTelemetry();
-        document.documentElement.style.setProperty('--ui-accent', '#ff0044');
+    startLoop() {
+        const loop = () => {
+            this.fx.updateAndRender();
+            requestAnimationFrame(loop);
+        };
+        loop();
     }
+}
 
-    function changeFruit(type) {
-        state.type = type;
-        btns.forEach(b => b.classList.remove('active'));
-        document.querySelector(`[data-type="${type}"]`).classList.add('active');
-        state.particles = []; // Clear current system
-        resetEngine();
-    }
-
-    // --- EVENT LISTENERS ---
-    const evOpt = { passive: false };
+// -------------------------------------------------------------------------
+// 7. INITIALIZATION BOOTSTRAP
+// -------------------------------------------------------------------------
+window.onload = () => {
+    // Prevent context menu on right click/long press for better game feel
+    document.addEventListener('contextmenu', event => event.preventDefault());
     
-    // Direct Entity Binding
-    elContainer.addEventListener('mousedown', (e) => { e.preventDefault(); handleInput(e.clientX, e.clientY); }, evOpt);
-    elContainer.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(e.touches[0].clientX, e.touches[0].clientY); }, evOpt);
-
-    // Global binding for fast clicking outside bounds when intense
-    document.body.addEventListener('mousedown', (e) => {
-        if(e.target.closest('#hud')) return;
-        if(e.target !== elContainer && !elContainer.contains(e.target)) {
-            // Fake coordinate if clicked outside but want to register hit
-            const rect = elContainer.getBoundingClientRect();
-            handleInput(rect.left + rect.width/2 + (Math.random()*100-50), rect.top + rect.height/2 + (Math.random()*100-50));
-        }
-    }, evOpt);
-
-    btns.forEach(b => {
-        b.addEventListener('click', () => changeFruit(b.getAttribute('data-type')));
-    });
-
-    // Boot
-    initFractures();
-    updateTelemetry();
+    // Instantiate Engine
+    window.GameInstance = new GameController();
+};
 
 </script>
 </body>
