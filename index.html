@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ULTIMATE FRUIT SMASHER</title>
+<style>
+    :root {
+        --bg-color: #1a1a1a;
+        --text-color: #f0f0f0;
+        --menu-bg: #2a2a2a;
+        --accent: #ff4757;
+        
+        /* Watermelon Colors */
+        --wm-light: #5dbb63;
+        --wm-dark: #3a7a40;
+        --wm-inner: #ff4757;
+        --wm-seed: #111;
+        
+        /* Apple Colors */
+        --ap-red: #e84118;
+        --ap-dark: #c23616;
+        --ap-stem: #7158e2;
+        --ap-leaf: #4cd137;
+        
+        /* Orange Colors */
+        --or-light: #ffa502;
+        --or-dark: #eccc68;
+        
+        /* Coconut Colors */
+        --co-shell: #5c3a21;
+        --co-dark: #3e2723;
+        --co-meat: #ffffff;
+        
+        /* Pumpkin Colors */
+        --pu-main: #ff7f50;
+        --pu-shadow: #ff6348;
+        --pu-stem: #2ed573;
+        
+        /* Pineapple Colors */
+        --pi-main: #f1c40f;
+        --pi-line: #f39c12;
+        --pi-leaf: #009432;
+    }
+
+    body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-family: 'Courier New', Courier, monospace;
+        overflow: hidden;
+        user-select: none;
+    }
+
+    #game-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        position: relative;
+    }
+
+    #menu {
+        position: absolute;
+        top: 20px;
+        display: flex;
+        gap: 15px;
+        z-index: 100;
+        background: var(--menu-bg);
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    }
+
+    .menu-btn {
+        background: #333;
+        color: white;
+        border: 2px solid #555;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-weight: bold;
+        text-transform: uppercase;
+        transition: all 0.2s;
+        border-radius: 5px;
+    }
+
+    .menu-btn:hover {
+        background: var(--accent);
+        transform: scale(1.1);
+    }
+
+    .menu-btn.active {
+        background: var(--accent);
+        border-color: white;
+    }
+
+    #stats {
+        position: absolute;
+        top: 100px;
+        font-size: 2rem;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    #click-count {
+        font-size: 4rem;
+        color: var(--accent);
+    }
+
+    /* --- BASE FRUIT STYLES --- */
+    #fruit-stage {
+        position: relative;
+        width: 400px;
+        height: 400px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: transform 0.05s ease-out;
+    }
+
+    #fruit-stage:active {
+        transform: scale(0.95);
+    }
+
+    .fruit {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        transition: all 0.1s;
+        box-shadow: inset -20px -20px 40px rgba(0,0,0,0.4), 
+                    10px 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .crack-overlay {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        opacity: 0;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        transition: opacity 0.2s;
+        z-index: 5;
+    }
+
+    /* --- WATERMELON EXTREME DETAIL --- */
+    .watermelon {
+        background: repeating-linear-gradient(
+            45deg,
+            var(--wm-light),
+            var(--wm-light) 20px,
+            var(--wm-dark) 20px,
+            var(--wm-dark) 40px
+        );
+        border-radius: 40% 60% 50% 50% / 50% 50% 60% 40%;
+    }
+
+    .watermelon::after {
+        content: '';
+        position: absolute;
+        top: 5%;
+        left: 5%;
+        width: 90%;
+        height: 90%;
+        border-radius: inherit;
+        box-shadow: inset 20px 20px 40px rgba(255,255,255,0.2);
+    }
+
+    /* Watermelon Cracks */
+    .fruit[data-fruit="watermelon"][data-stage="1"] .crack-1 { opacity: 0.3; background-image: radial-gradient(circle at 30% 30%, transparent 0, #000 2px, transparent 3px); }
+    .fruit[data-fruit="watermelon"][data-stage="2"] .crack-2 { opacity: 0.6; background-image: linear-gradient(45deg, transparent 48%, #111 49%, #111 51%, transparent 52%); }
+    .fruit[data-fruit="watermelon"][data-stage="3"] .crack-3 { opacity: 0.8; background-color: rgba(255, 71, 87, 0.2); }
+    .fruit[data-fruit="watermelon"][data-stage="4"] .crack-4 { opacity: 1; background-color: rgba(255, 71, 87, 0.5); box-shadow: inset 0 0 50px #ff4757; }
+
+    /* --- APPLE EXTREME DETAIL --- */
+    .apple {
+        background: radial-gradient(circle at 30% 30%, #ff6b81, var(--ap-red), var(--ap-dark));
+        border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    }
+    
+    .apple::before {
+        content: '';
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 10px;
+        height: 40px;
+        background: var(--co-shell);
+        border-radius: 5px;
+        z-index: -1;
+    }
+
+    .apple::after {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: 55%;
+        width: 40px;
+        height: 20px;
+        background: var(--ap-leaf);
+        border-radius: 20px 0;
+        transform: rotate(20deg);
+        z-index: -1;
+    }
+
+    /* Apple Cracks */
+    .fruit[data-fruit="apple"][data-stage="1"] .crack-1 { opacity: 0.4; }
+    .fruit[data-fruit="apple"][data-stage="2"] .crack-2 { opacity: 0.7; background: repeating-radial-gradient(circle at 50% 50%, transparent 0, transparent 10px, rgba(100,0,0,0.2) 11px, transparent 12px); }
+    .fruit[data-fruit="apple"][data-stage="3"] .crack-3 { opacity: 0.9; box-shadow: inset 0 0 100px rgba(150,0,0,0.8); }
+    .fruit[data-fruit="apple"][data-stage="4"] .crack-4 { opacity: 1; filter: sepia(0.5) hue-rotate(-30deg) saturate(3); }
+
+    /* --- ORANGE EXTREME DETAIL --- */
+    .orange {
+        background: radial-gradient(circle at 40% 40%, var(--or-light), var(--or-dark));
+        border-radius: 50%;
+        /* Orange Peel Texture */
+        background-image: radial-gradient(#d35400 15%, transparent 16%), radial-gradient(#d35400 15%, transparent 16%);
+        background-size: 10px 10px;
+        background-position: 0 0, 5px 5px;
+    }
+
+    /* Orange Cracks */
+    .fruit[data-fruit="orange"][data-stage="1"] .crack-1 { opacity: 0.5; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+    .fruit[data-fruit="orange"][data-stage="2"] .crack-2 { opacity: 0.7; background: linear-gradient(90deg, transparent 48%, rgba(200,50,0,0.5) 50%, transparent 52%); }
+    .fruit[data-fruit="orange"][data-stage="3"] .crack-3 { opacity: 0.9; background-color: rgba(200, 50, 0, 0.3); }
+    .fruit[data-fruit="orange"][data-stage="4"] .crack-4 { opacity: 1; box-shadow: inset 0 0 80px #d35400; filter: contrast(1.5); }
+
+    /* --- COCONUT EXTREME DETAIL --- */
+    .coconut {
+        background: radial-gradient(circle at 30% 30%, var(--co-shell), var(--co-dark));
+        border-radius: 50%;
+        /* Hairy texture */
+        background-image: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px);
+    }
+    
+    .coconut::before {
+        content: '';
+        position: absolute;
+        top: 20%;
+        left: 30%;
+        width: 30px;
+        height: 30px;
+        background: #111;
+        border-radius: 50%;
+        box-shadow: 40px 10px 0 #111, 20px 40px 0 #111;
+    }
+
+    /* Coconut Cracks */
+    .fruit[data-fruit="coconut"][data-stage="1"] .crack-1 { opacity: 0.6; background: linear-gradient(135deg, transparent 49%, white 50%, transparent 51%); }
+    .fruit[data-fruit="coconut"][data-stage="2"] .crack-2 { opacity: 0.8; background: linear-gradient(45deg, transparent 48%, white 50%, transparent 52%); }
+    .fruit[data-fruit="coconut"][data-stage="3"] .crack-3 { opacity: 0.9; box-shadow: inset 0 0 50px white; }
+    .fruit[data-fruit="coconut"][data-stage="4"] .crack-4 { opacity: 1; background-color: rgba(255,255,255,0.4); }
+
+    /* --- PUMPKIN EXTREME DETAIL --- */
+    .pumpkin {
+        background: var(--pu-main);
+        border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+        box-shadow: 
+            inset 30px 0 20px var(--pu-shadow),
+            inset -30px 0 20px var(--pu-shadow);
+        overflow: hidden;
+    }
+
+    .pumpkin::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 20%; right: 20%; bottom: 0;
+        border-left: 5px solid rgba(0,0,0,0.1);
+        border-right: 5px solid rgba(0,0,0,0.1);
+        border-radius: 50%;
+    }
+    
+    .pumpkin::after {
+        content: '';
+        position: absolute;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 20px;
+        height: 50px;
+        background: var(--pu-stem);
+        border-radius: 5px;
+        z-index: -1;
+    }
+
+    /* Pumpkin Cracks */
+    .fruit[data-fruit="pumpkin"][data-stage="1"] .crack-1 { opacity: 0.4; box-shadow: inset 0 0 30px #d35400; }
+    .fruit[data-fruit="pumpkin"][data-stage="2"] .crack-2 { opacity: 0.6; background: radial-gradient(circle at 50% 50%, transparent 50%, rgba(100,20,0,0.5) 100%); }
+    .fruit[data-fruit="pumpkin"][data-stage="3"] .crack-3 { opacity: 0.8; filter: hue-rotate(-20deg); }
+    .fruit[data-fruit="pumpkin"][data-stage="4"] .crack-4 { opacity: 1; background-color: rgba(150, 0, 0, 0.4); }
+
+    /* --- PINEAPPLE EXTREME DETAIL --- */
+    .pineapple {
+        background: var(--pi-main);
+        border-radius: 40% 40% 50% 50% / 60% 60% 40% 40%;
+        background-image: 
+            linear-gradient(135deg, var(--pi-line) 25%, transparent 25%),
+            linear-gradient(225deg, var(--pi-line) 25%, transparent 25%),
+            linear-gradient(45deg, var(--pi-line) 25%, transparent 25%),
+            linear-gradient(315deg, var(--pi-line) 25%, transparent 25%);
+        background-position:  10px 0, 10px 0, 0 0, 0 0;
+        background-size: 20px 20px;
+        background-repeat: repeat;
+    }
+
+    .pineapple::before {
+        content: '';
+        position: absolute;
+        top: -80px;
+        left: 20%;
+        width: 60%;
+        height: 100px;
+        background: 
+            linear-gradient(0deg, var(--pi-leaf) 50%, transparent 50%),
+            linear-gradient(45deg, var(--pi-leaf) 50%, transparent 50%),
+            linear-gradient(-45deg, var(--pi-leaf) 50%, transparent 50%);
+        clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        z-index: -1;
+    }
+
+    /* Pineapple Cracks */
+    .fruit[data-fruit="pineapple"][data-stage="1"] .crack-1 { opacity: 0.5; background-color: rgba(200, 100, 0, 0.2); }
+    .fruit[data-fruit="pineapple"][data-stage="2"] .crack-2 { opacity: 0.7; box-shadow: inset 0 0 60px #d35400; }
+    .fruit[data-fruit="pineapple"][data-stage="3"] .crack-3 { opacity: 0.9; filter: saturate(2) brightness(0.8); }
+    .fruit[data-fruit="pineapple"][data-stage="4"] .crack-4 { opacity: 1; background-color: rgba(255, 0, 0, 0.3); }
+
+    /* --- PARTICLE SYSTEM --- */
+    .particle {
+        position: absolute;
+        pointer-events: none;
+        border-radius: 50%;
+        z-index: 1000;
+        animation: explode 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
+
+    @keyframes explode {
+        0% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+        100% {
+            transform: translate(var(--tx), var(--ty)) scale(0);
+            opacity: 0;
+        }
+    }
+
+    /* Jiggle Animation */
+    @keyframes jiggle {
+        0% { transform: rotate(0deg) scale(1); }
+        25% { transform: rotate(-5deg) scale(1.05); }
+        50% { transform: rotate(5deg) scale(0.95); }
+        75% { transform: rotate(-3deg) scale(1.02); }
+        100% { transform: rotate(0deg) scale(1); }
+    }
+
+    .jiggling {
+        animation: jiggle 0.1s infinite;
+    }
+
+</style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="menu">
+        <button class="menu-btn active" data-type="watermelon">Watermelon</button>
+        <button class="menu-btn" data-type="apple">Apple</button>
+        <button class="menu-btn" data-type="orange">Orange</button>
+        <button class="menu-btn" data-type="coconut">Coconut</button>
+        <button class="menu-btn" data-type="pumpkin">Pumpkin</button>
+        <button class="menu-btn" data-type="pineapple">Pineapple</button>
+    </div>
+
+    <div id="stats">
+        <div>CLICKS</div>
+        <div id="click-count">0</div>
+        <div style="font-size: 1rem; color: #888;">TARGET: 50</div>
+    </div>
+
+    <div id="fruit-stage">
+        <div id="active-fruit" class="fruit watermelon" data-fruit="watermelon" data-stage="0">
+            <div class="crack-overlay crack-1"></div>
+            <div class="crack-overlay crack-2"></div>
+            <div class="crack-overlay crack-3"></div>
+            <div class="crack-overlay crack-4"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const fruitStage = document.getElementById('fruit-stage');
+    const activeFruit = document.getElementById('active-fruit');
+    const clickCountDisplay = document.getElementById('click-count');
+    const menuBtns = document.querySelectorAll('.menu-btn');
+    
+    let clicks = 0;
+    const MAX_CLICKS = 50;
+    let currentFruitType = 'watermelon';
+
+    // Fruit Colors for Particles
+    const fruitColors = {
+        watermelon: ['#ff4757', '#5dbb63', '#111'],
+        apple: ['#e84118', '#f5f6fa', '#c23616'],
+        orange: ['#ffa502', '#eccc68', '#d35400'],
+        coconut: ['#ffffff', '#5c3a21', '#3e2723'],
+        pumpkin: ['#ff7f50', '#ff6348', '#d35400'],
+        pineapple: ['#f1c40f', '#f39c12', '#fff']
+    };
+
+    // Audio context setup (Silent generation to mimic intense processing)
+    const setupAudio = () => {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const ctx = new AudioContext();
+            return ctx;
+        } catch (e) {
+            return null;
+        }
+    };
+    const audioCtx = setupAudio();
+
+    function playClickSound() {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(100 + (clicks * 5), audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    function playExplosionSound() {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+    }
+
+    function updateFruitStage() {
+        if (clicks < 10) {
+            activeFruit.setAttribute('data-stage', '0');
+            activeFruit.classList.remove('jiggling');
+        } else if (clicks < 20) {
+            activeFruit.setAttribute('data-stage', '1');
+        } else if (clicks < 30) {
+            activeFruit.setAttribute('data-stage', '2');
+        } else if (clicks < 40) {
+            activeFruit.setAttribute('data-stage', '3');
+            activeFruit.classList.add('jiggling');
+        } else if (clicks < 50) {
+            activeFruit.setAttribute('data-stage', '4');
+            activeFruit.style.animationDuration = '0.05s'; // Faster jiggle
+        }
+    }
+
+    function createParticles(x, y, isExplosion = false) {
+        const numParticles = isExplosion ? 150 : 5;
+        const colors = fruitColors[currentFruitType];
+        
+        for (let i = 0; i < numParticles; i++) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            
+            // Randomize properties
+            const size = Math.random() * (isExplosion ? 20 : 10) + 5;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Calculate random trajectory
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * (isExplosion ? 800 : 100) + (isExplosion ? 100 : 20);
+            const tx = Math.cos(angle) * distance + 'px';
+            const ty = Math.sin(angle) * distance + 'px';
+            
+            // Apply styles
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+            particle.style.backgroundColor = color;
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            particle.style.setProperty('--tx', tx);
+            particle.style.setProperty('--ty', ty);
+            
+            document.body.appendChild(particle);
+            
+            // Cleanup
+            setTimeout(() => {
+                particle.remove();
+            }, 800);
+        }
+    }
+
+    function explodeFruit() {
+        playExplosionSound();
+        const rect = activeFruit.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        createParticles(centerX, centerY, true);
+        
+        activeFruit.style.display = 'none';
+        
+        setTimeout(() => {
+            resetGame();
+        }, 1000);
+    }
+
+    function resetGame() {
+        clicks = 0;
+        clickCountDisplay.textContent = clicks;
+        activeFruit.style.display = 'block';
+        activeFruit.style.animationDuration = '0.1s';
+        updateFruitStage();
+    }
+
+    function switchFruit(type) {
+        currentFruitType = type;
+        
+        // Remove all previous fruit classes
+        menuBtns.forEach(btn => {
+            activeFruit.classList.remove(btn.getAttribute('data-type'));
+        });
+        
+        // Add new class and attributes
+        activeFruit.classList.add(type);
+        activeFruit.setAttribute('data-fruit', type);
+        
+        // Update menu UI
+        menuBtns.forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.menu-btn[data-type="${type}"]`).classList.add('active');
+        
+        resetGame();
+    }
+
+    // Event Listeners
+    fruitStage.addEventListener('mousedown', (e) => {
+        if (clicks >= MAX_CLICKS) return;
+        
+        clicks++;
+        clickCountDisplay.textContent = clicks;
+        playClickSound();
+        
+        // Add physical response
+        createParticles(e.clientX, e.clientY, false);
+        updateFruitStage();
+        
+        if (clicks >= MAX_CLICKS) {
+            explodeFruit();
+        }
+    });
+
+    // Touch support
+    fruitStage.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (clicks >= MAX_CLICKS) return;
+        
+        clicks++;
+        clickCountDisplay.textContent = clicks;
+        playClickSound();
+        
+        const touch = e.touches[0];
+        createParticles(touch.clientX, touch.clientY, false);
+        updateFruitStage();
+        
+        if (clicks >= MAX_CLICKS) {
+            explodeFruit();
+        }
+    });
+
+    menuBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (clicks > 0 && clicks < MAX_CLICKS) {
+                if(!confirm("Are you sure? You will lose your current cracking progress!")) {
+                    return;
+                }
+            }
+            switchFruit(btn.getAttribute('data-type'));
+        });
+    });
+
+    // Initialize random visual effects loop to make it feel "extreme"
+    setInterval(() => {
+        if (clicks > 35 && clicks < MAX_CLICKS) {
+            activeFruit.style.filter = `brightness(${1 + Math.random() * 0.5})`;
+            setTimeout(() => {
+                activeFruit.style.filter = 'none';
+            }, 50);
+        }
+    }, 100);
+
+</script>
+</body>
+</html>
