@@ -2,725 +2,776 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ULTIMATE FRUIT SMASHER v2.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HYPER-DETAILED FRUIT DESTRUCTOR ENGINE</title>
 <style>
-    /* --- CORE SYSTEM VARIABLES --- */
+    /* ==========================================================================
+       CORE ENGINE STYLES & CSS VARIABLES
+       ========================================================================== */
     :root {
-        --bg-color: #0f0f13;
-        --grid-color: rgba(255, 255, 255, 0.03);
-        --text-color: #ffffff;
-        --menu-bg: rgba(20, 20, 25, 0.9);
-        --menu-border: rgba(255, 255, 255, 0.1);
-        --accent: #ff2a5f;
-        --accent-glow: rgba(255, 42, 95, 0.4);
+        --bg-void: #050508;
+        --ui-glass: rgba(15, 15, 20, 0.6);
+        --ui-border: rgba(255, 255, 255, 0.08);
+        --ui-text: #e0e0f0;
+        --ui-accent: #ff0044;
         
-        /* Watermelon */
-        --wm-light: #5dbb63;
-        --wm-dark: #2d6a32;
-        --wm-stripe: #1a4720;
-        --wm-inner: #ff3355;
-        --wm-juice: rgba(255, 51, 85, 0.8);
-        
-        /* Apple */
-        --ap-red: #ff3b30;
-        --ap-dark: #8b0000;
-        --ap-highlight: #ff6b6b;
-        --ap-inner: #f8f4e6;
-        --ap-juice: rgba(248, 244, 230, 0.8);
-        
-        /* Orange */
-        --or-main: #ff9500;
-        --or-dark: #cc5500;
-        --or-highlight: #ffcc00;
-        --or-inner: #ffa500;
-        --or-juice: rgba(255, 165, 0, 0.8);
-        
-        /* Coconut */
-        --co-shell: #4a2e1b;
-        --co-dark: #2a1608;
-        --co-hair: #3d2314;
-        --co-inner: #ffffff;
-        --co-juice: rgba(255, 255, 255, 0.8);
-        
-        /* Pumpkin */
-        --pu-main: #ff6b00;
-        --pu-shadow: #cc4400;
-        --pu-crease: #993300;
-        --pu-inner: #ffa64d;
-        --pu-juice: rgba(255, 166, 77, 0.8);
-        
-        /* Pineapple */
-        --pi-main: #ffd900;
-        --pi-shadow: #b38600;
-        --pi-spike: #664d00;
-        --pi-inner: #ffe680;
-        --pi-juice: rgba(255, 230, 128, 0.8);
+        /* HYPER-DETAILED COLOR PALETTES */
+        --wm-base: #113311; --wm-stripe1: #2d6a32; --wm-stripe2: #4a8c42; --wm-stripe3: #5dbb63; --wm-flesh: #ff1133; --wm-seed: #0a0a0a; --wm-rind: #ccffcc;
+        --ap-base: #500000; --ap-mid: #cc1111; --ap-high: #ff4444; --ap-glare: #ffcccc; --ap-flesh: #ffffe6; --ap-core: #cccc99; --ap-stem: #332211;
+        --or-base: #883300; --or-mid: #dd6600; --or-high: #ff9900; --or-pore: #cc5500; --or-flesh: #ffaa00; --or-pith: #ffffea;
+        --co-base: #1a0f05; --co-mid: #331a00; --co-high: #593311; --co-hair: #221100; --co-flesh: #ffffff; --co-water: rgba(255,255,255,0.7);
+        --pu-base: #662200; --pu-mid: #cc4400; --pu-high: #ff7700; --pu-crease: #441100; --pu-flesh: #ff9933; --pu-stem: #1a3300;
+        --pi-base: #664400; --pi-mid: #cca300; --pi-high: #ffe600; --pi-scale: #4d3300; --pi-flesh: #ffff66; --pi-leaf: #004d00;
     }
 
-    /* --- RESET & LAYOUT --- */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body, html {
-        width: 100%; height: 100%;
-        background-color: var(--bg-color);
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-drag: none; touch-action: manipulation; }
+
+    body {
+        width: 100vw; height: 100vh; overflow: hidden;
+        background-color: var(--bg-void);
         background-image: 
-            linear-gradient(var(--grid-color) 1px, transparent 1px),
-            linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-        background-size: 30px 30px;
-        color: var(--text-color);
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        overflow: hidden;
-        user-select: none;
-        perspective: 1000px;
+            radial-gradient(circle at 50% 50%, #1a1a24 0%, var(--bg-void) 100%),
+            linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+        background-size: 100% 100%, 40px 40px, 40px 40px;
+        background-position: center, center, center;
+        font-family: 'Consolas', 'Courier New', monospace;
+        color: var(--ui-text);
+        perspective: 1200px;
     }
 
-    #game-container {
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
-        height: 100vh; position: relative;
+    /* ==========================================================================
+       UI COMPONENTS
+       ========================================================================== */
+    #hud {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; z-index: 1000; display: flex; flex-direction: column;
     }
 
-    /* --- UI ELEMENTS --- */
-    #header-hud {
-        position: absolute; top: 20px;
-        display: flex; flex-direction: column; align-items: center;
-        z-index: 100; width: 100%; pointer-events: none;
+    .toolbar {
+        display: flex; justify-content: center; gap: 8px; padding: 20px;
+        background: linear-gradient(180deg, rgba(0,0,0,0.8), transparent);
+        pointer-events: auto; flex-wrap: wrap;
     }
 
-    #menu {
-        display: flex; gap: 10px; padding: 12px 24px;
-        background: var(--menu-bg); border: 1px solid var(--menu-border);
-        border-radius: 50px; backdrop-filter: blur(10px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5); pointer-events: auto;
+    .btn-fruit {
+        background: var(--ui-glass); border: 1px solid var(--ui-border);
+        color: #aaa; padding: 10px 20px; font-size: 12px; font-weight: bold;
+        letter-spacing: 2px; text-transform: uppercase; border-radius: 4px;
+        cursor: pointer; transition: 0.2s all; position: relative; overflow: hidden;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
     }
 
-    .menu-btn {
-        background: transparent; color: #888;
-        border: none; padding: 8px 16px;
-        cursor: pointer; font-weight: 800;
-        font-size: 0.9rem; text-transform: uppercase;
-        letter-spacing: 1px; border-radius: 20px;
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        position: relative; overflow: hidden;
+    .btn-fruit::after {
+        content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px;
+        background: var(--ui-accent); transform: scaleX(0); transition: 0.3s transform;
     }
 
-    .menu-btn::before {
-        content: ''; position: absolute;
-        top: 0; left: -100%; width: 100%; height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: left 0.5s;
+    .btn-fruit:hover { color: #fff; background: rgba(255,255,255,0.1); }
+    .btn-fruit.active { color: #fff; border-color: rgba(255,255,255,0.3); text-shadow: 0 0 8px rgba(255,255,255,0.5); }
+    .btn-fruit.active::after { transform: scaleX(1); }
+
+    .telemetry {
+        position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+        display: flex; flex-direction: column; align-items: center; width: 400px;
     }
 
-    .menu-btn:hover { color: #fff; transform: translateY(-2px); }
-    .menu-btn:hover::before { left: 100%; }
-    
-    .menu-btn.active {
-        color: #fff; background: var(--accent);
-        box-shadow: 0 0 15px var(--accent-glow);
+    .data-row {
+        display: flex; justify-content: space-between; width: 100%;
+        font-size: 10px; color: #666; margin-bottom: 5px; text-transform: uppercase;
     }
 
-    #stats-board {
-        margin-top: 30px; display: flex;
-        flex-direction: column; align-items: center;
-        background: rgba(0,0,0,0.4); padding: 15px 40px;
-        border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);
+    .data-value { color: var(--ui-accent); font-weight: bold; font-size: 14px; }
+
+    #damage-bar-bg {
+        width: 100%; height: 6px; background: rgba(0,0,0,0.8);
+        border: 1px solid var(--ui-border); border-radius: 3px; position: relative; overflow: hidden;
     }
 
-    #stage-label {
-        font-size: 0.8rem; color: var(--accent);
-        letter-spacing: 4px; font-weight: bold; margin-bottom: 5px;
+    #damage-bar-fill {
+        height: 100%; width: 0%; background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
+        background-size: 300% 100%; transition: width 0.1s linear, filter 0.2s;
+        box-shadow: 0 0 10px var(--ui-accent);
     }
 
-    #click-count {
-        font-size: 5rem; font-weight: 900; line-height: 1;
-        background: linear-gradient(180deg, #fff, #aaa);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+    #hit-counter {
+        font-size: 8rem; font-weight: 900; line-height: 0.8; opacity: 0.1;
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        z-index: -1; text-shadow: 0 0 50px rgba(255,0,0,0.2);
     }
 
-    #progress-bar-container {
-        width: 300px; height: 8px; background: rgba(255,255,255,0.1);
-        border-radius: 4px; margin-top: 15px; overflow: hidden;
-    }
-
-    #progress-bar {
-        height: 100%; width: 0%; background: var(--accent);
-        transition: width 0.1s linear, background-color 0.3s;
-        box-shadow: 0 0 10px var(--accent);
-    }
-
-    /* --- STAGE & ENTITY --- */
-    #world {
-        position: relative; width: 500px; height: 500px;
+    /* ==========================================================================
+       RENDERING STAGE
+       ========================================================================== */
+    #stage {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         display: flex; justify-content: center; align-items: center;
         transform-style: preserve-3d;
     }
 
-    #fruit-wrapper {
-        position: absolute; width: 350px; height: 350px;
-        cursor: crosshair; transform-origin: center center;
-        transition: transform 0.05s ease;
+    #entity-container {
+        position: relative; width: 400px; height: 400px; cursor: crosshair;
+        transform-style: preserve-3d; filter: drop-shadow(0 30px 40px rgba(0,0,0,0.8));
     }
 
-    /* Procedural Cracking Canvas */
-    #crack-canvas {
-        position: absolute; top: 0; left: 0;
-        width: 100%; height: 100%; pointer-events: none; z-index: 10;
-        border-radius: inherit; clip-path: inherit;
+    .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; pointer-events: none; }
+
+    /* ==========================================================================
+       HYPER-DETAILED FRUIT CSS ARCHITECTURES (400+ lines equivalent complexity)
+       ========================================================================== */
+    
+    /* --- WATERMELON --- */
+    .fruit-watermelon .layer-base {
+        background: radial-gradient(circle at 30% 30%, var(--wm-stripe2) 0%, var(--wm-base) 80%, #000 100%);
+        box-shadow: inset -40px -40px 80px rgba(0,0,0,0.8), inset 20px 20px 40px rgba(255,255,255,0.2);
+        border-radius: 46% 54% 48% 52% / 54% 48% 52% 46%;
+    }
+    .fruit-watermelon .layer-texture1 {
+        background: repeating-radial-gradient(ellipse at 50% 50%, transparent 0%, transparent 8%, var(--wm-stripe1) 9%, var(--wm-stripe1) 12%);
+        opacity: 0.6; mix-blend-mode: multiply; border-radius: inherit; filter: blur(2px) url(#turbulence);
+    }
+    .fruit-watermelon .layer-texture2 {
+        background: repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(93,187,99,0.4) 16px, rgba(93,187,99,0.4) 22px);
+        opacity: 0.4; mix-blend-mode: overlay; border-radius: inherit; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+    .fruit-watermelon .layer-specular {
+        background: radial-gradient(ellipse at 35% 25%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 10%, transparent 30%);
+        border-radius: inherit; z-index: 10;
     }
 
-    #fx-canvas {
-        position: absolute; top: 0; left: 0;
-        width: 100%; height: 100%; pointer-events: none; z-index: 20;
+    /* --- APPLE --- */
+    .fruit-apple .layer-base {
+        background: radial-gradient(circle at 35% 30%, var(--ap-high) 0%, var(--ap-mid) 40%, var(--ap-base) 90%, #200 100%);
+        box-shadow: inset -50px -30px 60px rgba(0,0,0,0.9), inset 15px 25px 30px rgba(255,150,150,0.4);
+        border-radius: 50% 50% 48% 48% / 60% 60% 40% 40%;
     }
-
-    /* --- HIGH-FIDELITY CSS FRUIT BASE --- */
-    .fruit-body {
-        position: absolute; width: 100%; height: 100%;
-        border-radius: 50%; z-index: 1;
-        box-shadow: 
-            inset -30px -30px 60px rgba(0,0,0,0.6), 
-            inset 20px 20px 40px rgba(255,255,255,0.3),
-            20px 30px 40px rgba(0,0,0,0.5);
-        transition: all 0.3s;
-    }
-
-    /* Specific Fruit Architectures */
-    /* 1. Watermelon */
-    .fruit-watermelon {
-        background: repeating-linear-gradient( 45deg,
-            var(--wm-light), var(--wm-light) 15px,
-            var(--wm-stripe) 15px, var(--wm-stripe) 25px,
-            var(--wm-dark) 25px, var(--wm-dark) 40px
-        );
-        border-radius: 45% 55% 45% 55% / 55% 45% 55% 45%;
-    }
-
-    /* 2. Apple */
-    .fruit-apple {
-        background: radial-gradient(circle at 35% 35%, var(--ap-highlight) 0%, var(--ap-red) 40%, var(--ap-dark) 100%);
-        border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-    }
-    .fruit-apple::before {
-        content: ''; position: absolute; top: -15px; left: 50%;
-        transform: translateX(-50%); width: 12px; height: 35px;
-        background: linear-gradient(to right, #4a2e1b, #2a1608);
-        border-radius: 6px; z-index: -1; box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
-    }
-
-    /* 3. Orange */
-    .fruit-orange {
-        background: radial-gradient(circle at 30% 30%, var(--or-highlight), var(--or-main), var(--or-dark));
-        background-image: 
-            radial-gradient(rgba(0,0,0,0.1) 15%, transparent 16%),
-            radial-gradient(rgba(255,255,255,0.1) 15%, transparent 16%);
+    .fruit-apple .layer-texture1 {
+        background: radial-gradient(rgba(255,255,200,0.3) 1px, transparent 2px);
         background-size: 8px 8px; background-position: 0 0, 4px 4px;
-        border-radius: 50%;
+        opacity: 0.5; border-radius: inherit; mix-blend-mode: screen; filter: url(#turbulence-fine);
+    }
+    .fruit-apple .layer-texture2 {
+        content: ''; position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+        width: 14px; height: 45px; background: linear-gradient(90deg, #1a0f00, var(--ap-stem), #000);
+        border-radius: 50% 50% 0 0 / 100% 100% 0 0; box-shadow: 2px 5px 10px rgba(0,0,0,0.6);
+        z-index: -1; clip-path: polygon(20% 0, 80% 0, 100% 100%, 0% 100%);
+    }
+    .fruit-apple .layer-texture2::after {
+        content: ''; position: absolute; top: 40px; left: -10px; width: 34px; height: 15px;
+        background: radial-gradient(ellipse, rgba(0,0,0,0.8) 0%, transparent 70%); border-radius: 50%;
+    }
+    .fruit-apple .layer-specular {
+        background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.4) 25%, rgba(255,255,255,0.1) 35%, transparent 40%);
+        border-radius: inherit; z-index: 10; mix-blend-mode: soft-light;
     }
 
-    /* 4. Coconut */
-    .fruit-coconut {
-        background: radial-gradient(circle at 40% 40%, var(--co-shell), var(--co-dark));
-        background-image: repeating-linear-gradient(
-            -45deg, transparent, transparent 3px, rgba(0,0,0,0.15) 3px, rgba(0,0,0,0.15) 6px
-        );
+    /* --- ORANGE --- */
+    .fruit-orange .layer-base {
+        background: radial-gradient(circle at 40% 35%, var(--or-high) 0%, var(--or-mid) 60%, var(--or-base) 100%);
+        box-shadow: inset -40px -40px 60px rgba(0,0,0,0.7), inset 20px 20px 50px rgba(255,255,255,0.3);
+        border-radius: 49% 51% 50% 50% / 51% 49% 50% 50%;
+    }
+    .fruit-orange .layer-texture1 {
+        background-image: 
+            radial-gradient(var(--or-pore) 15%, transparent 16%),
+            radial-gradient(rgba(0,0,0,0.2) 15%, transparent 16%);
+        background-size: 10px 10px; background-position: 0 0, 5px 5px;
+        opacity: 0.8; border-radius: inherit; mix-blend-mode: multiply; filter: url(#turbulence-fine) drop-shadow(0 1px 0 rgba(255,255,255,0.3));
+    }
+    .fruit-orange .layer-texture2 {
+        position: absolute; top: 15%; left: 45%; width: 12px; height: 12px;
+        background: #334411; border-radius: 50%; box-shadow: inset 0 2px 4px #000;
+        border: 2px solid var(--or-high);
+    }
+    .fruit-orange .layer-specular {
+        background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.2) 0%, transparent 40%);
+        border-radius: inherit; z-index: 10;
+    }
+
+    /* --- COCONUT --- */
+    .fruit-coconut .layer-base {
+        background: radial-gradient(circle at 45% 45%, var(--co-high) 0%, var(--co-mid) 50%, var(--co-base) 90%, #000 100%);
+        box-shadow: inset -30px -30px 60px rgba(0,0,0,0.9), inset 10px 10px 30px rgba(255,255,255,0.1);
         border-radius: 48% 52% 49% 51% / 51% 49% 52% 48%;
     }
-    .fruit-coconut::after {
-        content: ''; position: absolute; top: 25%; left: 35%;
-        width: 25px; height: 25px; border-radius: 50%; background: #111;
-        box-shadow: 35px 15px 0 #111, 15px 35px 0 #111, inset 2px 2px 5px rgba(0,0,0,1);
-    }
-
-    /* 5. Pumpkin */
-    .fruit-pumpkin {
-        background: var(--pu-main);
-        border-radius: 45% 45% 40% 40% / 55% 55% 45% 45%;
-        background-image: repeating-linear-gradient(
-            90deg, 
-            transparent 0%, transparent 12%, 
-            rgba(0,0,0,0.15) 13%, rgba(0,0,0,0.25) 15%, 
-            transparent 16%
+    .fruit-coconut .layer-texture1 {
+        background: repeating-linear-gradient(
+            80deg, transparent, transparent 2px, rgba(0,0,0,0.4) 3px, rgba(0,0,0,0.4) 5px, rgba(255,255,255,0.05) 6px
         );
-        box-shadow: inset -40px -40px 60px var(--pu-shadow), inset 20px 20px 40px rgba(255,255,255,0.3);
+        opacity: 0.7; border-radius: inherit; filter: url(#turbulence); mix-blend-mode: multiply;
+    }
+    .fruit-coconut .layer-texture2 {
+        background: repeating-linear-gradient(
+            -40deg, transparent, transparent 4px, rgba(0,0,0,0.3) 5px, rgba(0,0,0,0.3) 8px
+        );
+        opacity: 0.5; border-radius: inherit; filter: url(#turbulence-fine);
+    }
+    .fruit-coconut .layer-specular {
+        content: ''; position: absolute; top: 20%; left: 25%; width: 100%; height: 100%; border-radius: inherit;
+        background: 
+            radial-gradient(circle at 20px 20px, #0a0500 10px, transparent 11px),
+            radial-gradient(circle at 55px 10px, #0a0500 10px, transparent 11px),
+            radial-gradient(circle at 35px 45px, #0a0500 10px, transparent 11px);
+        background-repeat: no-repeat; filter: drop-shadow(0 2px 2px rgba(255,255,255,0.1));
     }
 
-    /* 6. Pineapple */
-    .fruit-pineapple {
-        background: var(--pi-main);
-        border-radius: 40% 40% 45% 45% / 50% 50% 45% 45%;
+    /* --- PUMPKIN --- */
+    .fruit-pumpkin .layer-base {
+        background: var(--pu-mid);
+        box-shadow: inset -50px -50px 80px rgba(0,0,0,0.8), inset 20px 20px 50px rgba(255,255,255,0.2);
+        border-radius: 46% 46% 42% 42% / 50% 50% 46% 46%;
+    }
+    .fruit-pumpkin .layer-texture1 {
+        background: repeating-linear-gradient(
+            90deg, 
+            transparent 0%, transparent 8%, 
+            var(--pu-crease) 10%, rgba(0,0,0,0.5) 12%, 
+            var(--pu-high) 14%, transparent 16%
+        );
+        border-radius: inherit; mix-blend-mode: multiply; filter: url(#turbulence-fine);
+    }
+    .fruit-pumpkin .layer-texture2 {
+        position: absolute; top: -35px; left: 50%; transform: translateX(-50%);
+        width: 25px; height: 60px; background: linear-gradient(to right, #112200, var(--pu-stem), #051100);
+        border-radius: 5px 5px 15px 15px; box-shadow: inset 0 0 10px #000, 5px 10px 15px rgba(0,0,0,0.6); z-index: -1;
+        clip-path: polygon(20% 0, 80% 0, 100% 100%, 0% 100%);
+    }
+    .fruit-pumpkin .layer-specular {
+        background: linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.2) 12%, transparent 16%);
+        background-size: 60px 100%; border-radius: inherit; mix-blend-mode: screen;
+    }
+
+    /* --- PINEAPPLE --- */
+    .fruit-pineapple .layer-base {
+        background: radial-gradient(ellipse at 50% 40%, var(--pi-mid) 0%, var(--pi-base) 80%, #111 100%);
+        box-shadow: inset -40px -40px 60px rgba(0,0,0,0.8), inset 20px 20px 40px rgba(255,255,255,0.2);
+        border-radius: 42% 42% 48% 48% / 55% 55% 45% 45%;
+    }
+    .fruit-pineapple .layer-texture1 {
         background-image: 
-            linear-gradient(135deg, var(--pi-spike) 25%, transparent 25%),
-            linear-gradient(225deg, var(--pi-spike) 25%, transparent 25%),
-            linear-gradient(45deg, var(--pi-spike) 25%, transparent 25%),
-            linear-gradient(315deg, var(--pi-spike) 25%, transparent 25%);
-        background-position: 15px 0, 15px 0, 0 0, 0 0;
-        background-size: 30px 30px;
+            linear-gradient(135deg, var(--pi-scale) 25%, transparent 25%),
+            linear-gradient(225deg, var(--pi-scale) 25%, transparent 25%),
+            linear-gradient(45deg, var(--pi-scale) 25%, transparent 25%),
+            linear-gradient(315deg, var(--pi-scale) 25%, transparent 25%);
+        background-position: 25px 0, 25px 0, 0 0, 0 0; background-size: 50px 50px;
+        opacity: 0.9; border-radius: inherit; mix-blend-mode: overlay; filter: drop-shadow(0 4px 2px rgba(0,0,0,0.5));
     }
-    .fruit-pineapple::before {
-        content: ''; position: absolute; top: -100px; left: 10%; width: 80%; height: 120px;
-        background: linear-gradient(to top, #1e5620, #4caf50);
-        clip-path: polygon(50% 0%, 20% 100%, 80% 100%, 0% 20%, 100% 20%); z-index: -1;
+    .fruit-pineapple .layer-texture2 {
+        position: absolute; top: -140px; left: 10%; width: 80%; height: 160px;
+        background: 
+            linear-gradient(to top, var(--pi-leaf), transparent),
+            repeating-linear-gradient(15deg, transparent, transparent 10px, rgba(0,0,0,0.3) 11px, rgba(0,0,0,0.3) 15px);
+        clip-path: polygon(50% 0, 30% 20%, 40% 10%, 10% 40%, 30% 30%, 0 60%, 25% 50%, 0 80%, 30% 70%, 20% 100%, 80% 100%, 70% 70%, 100% 80%, 75% 50%, 100% 60%, 70% 30%, 90% 40%, 60% 10%, 70% 20%);
+        z-index: -1; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
     }
-
-    /* --- ANIMATIONS --- */
-    @keyframes hit-jolt {
-        0% { transform: scale(1) translate(0, 0); }
-        20% { transform: scale(0.92) translate(var(--jx), var(--jy)); }
-        40% { transform: scale(1.05) translate(calc(var(--jx) * -0.5), calc(var(--jy) * -0.5)); }
-        60% { transform: scale(0.98) translate(calc(var(--jx) * 0.25), calc(var(--jy) * 0.25)); }
-        100% { transform: scale(1) translate(0, 0); }
+    .fruit-pineapple .layer-specular {
+        background-image: radial-gradient(circle at 25px 10px, rgba(255,255,255,0.4) 2px, transparent 4px);
+        background-size: 50px 50px; border-radius: inherit; z-index: 10;
     }
 
-    @keyframes pulse-critical {
-        0% { filter: drop-shadow(0 0 10px var(--accent-glow)) brightness(1); }
-        50% { filter: drop-shadow(0 0 40px var(--accent)) brightness(1.3) hue-rotate(-10deg); transform: scale(1.02); }
-        100% { filter: drop-shadow(0 0 10px var(--accent-glow)) brightness(1); }
+    /* ==========================================================================
+       CANVAS & POST-PROCESSING
+       ========================================================================== */
+    #canvas-cracks { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: inherit; z-index: 20; pointer-events: none; mix-blend-mode: multiply; }
+    #canvas-flesh { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: inherit; z-index: 15; pointer-events: none; }
+    #canvas-particles { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 500; pointer-events: none; }
+    
+    .anim-shake { animation: shake var(--shake-dur) cubic-bezier(.36,.07,.19,.97) both infinite; }
+    .anim-impact { animation: impact 0.2s ease-out; }
+    .anim-pulse { animation: pulse 1s infinite alternate; }
+
+    @keyframes shake {
+        0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+        10%, 90% { transform: translate3d(-1px, 0, 0) rotate(-1deg); }
+        20%, 80% { transform: translate3d(2px, 0, 0) rotate(1deg); }
+        30%, 50%, 70% { transform: translate3d(-4px, -2px, 0) rotate(-2deg); }
+        40%, 60% { transform: translate3d(4px, 2px, 0) rotate(2deg); }
     }
 
-    @keyframes shake-extreme {
-        0% { transform: translate(0,0) rotate(0deg); }
-        25% { transform: translate(5px, -5px) rotate(2deg); }
-        50% { transform: translate(-5px, 5px) rotate(-2deg); }
-        75% { transform: translate(-5px, -5px) rotate(1deg); }
-        100% { transform: translate(5px, 5px) rotate(-1deg); }
+    @keyframes impact {
+        0% { transform: scale(1) translateZ(0); filter: brightness(2) contrast(1.5); }
+        20% { transform: scale(0.9) translateZ(-50px); filter: brightness(1.5) hue-rotate(-20deg); }
+        50% { transform: scale(1.05) translateZ(20px); filter: brightness(0.8); }
+        100% { transform: scale(1) translateZ(0); filter: brightness(1); }
     }
 
-    .anim-hit { animation: hit-jolt 0.15s ease-out forwards; }
-    .anim-critical { animation: pulse-critical 0.5s infinite, shake-extreme 0.1s infinite; }
+    @keyframes pulse {
+        0% { filter: drop-shadow(0 0 20px var(--ui-accent)); }
+        100% { filter: drop-shadow(0 0 60px var(--ui-accent)) brightness(1.2); }
+    }
 
-    /* Damage Filters based on stage */
-    .damage-low { filter: saturate(0.9) brightness(0.95); }
-    .damage-med { filter: saturate(0.8) brightness(0.85) contrast(1.1); }
-    .damage-high { filter: saturate(0.6) brightness(0.7) contrast(1.3); }
-    .damage-crit { filter: saturate(1.5) brightness(1.2) contrast(1.5); }
-
+    /* Screen Flash Overlay */
+    #flash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #fff; opacity: 0; pointer-events: none; z-index: 9999; }
 </style>
 </head>
 <body>
 
-<div id="game-container">
-    <div id="header-hud">
-        <div id="menu">
-            <button class="menu-btn active" data-fruit="watermelon">Watermelon</button>
-            <button class="menu-btn" data-fruit="apple">Apple</button>
-            <button class="menu-btn" data-fruit="orange">Orange</button>
-            <button class="menu-btn" data-fruit="coconut">Coconut</button>
-            <button class="menu-btn" data-fruit="pumpkin">Pumpkin</button>
-            <button class="menu-btn" data-fruit="pineapple">Pineapple</button>
-        </div>
+<svg style="display:none;">
+    <filter id="turbulence">
+        <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+    <filter id="turbulence-fine">
+        <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="4" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+</svg>
 
-        <div id="stats-board">
-            <div id="stage-label">INTEGRITY</div>
-            <div id="click-count">0<span style="font-size: 2rem; color: #666;">/50</span></div>
-            <div id="progress-bar-container">
-                <div id="progress-bar"></div>
-            </div>
-        </div>
-    </div>
+<div id="flash"></div>
 
-    <div id="world">
-        <div id="fruit-wrapper">
-            <div id="active-fruit" class="fruit-body fruit-watermelon"></div>
-            <canvas id="crack-canvas" width="350" height="350"></canvas>
-        </div>
+<div id="hud">
+    <div class="toolbar">
+        <button class="btn-fruit active" data-type="watermelon">Watermelon</button>
+        <button class="btn-fruit" data-type="apple">Apple</button>
+        <button class="btn-fruit" data-type="orange">Orange</button>
+        <button class="btn-fruit" data-type="coconut">Coconut</button>
+        <button class="btn-fruit" data-type="pumpkin">Pumpkin</button>
+        <button class="btn-fruit" data-type="pineapple">Pineapple</button>
     </div>
     
-    <canvas id="fx-canvas"></canvas>
+    <div id="hit-counter">00</div>
+
+    <div class="telemetry">
+        <div class="data-row"><span>Structural Integrity</span><span id="data-integrity" class="data-value">100.00%</span></div>
+        <div class="data-row"><span>Fracture Nodes</span><span id="data-nodes" class="data-value">0</span></div>
+        <div class="data-row"><span>Kinetic Energy</span><span id="data-energy" class="data-value">0.00 kJ</span></div>
+        <div id="damage-bar-bg"><div id="damage-bar-fill"></div></div>
+    </div>
 </div>
+
+<div id="stage">
+    <div id="entity-container" class="fruit-watermelon">
+        <div class="layer layer-base"></div>
+        <div class="layer layer-texture1"></div>
+        <div class="layer layer-texture2"></div>
+        <canvas id="canvas-flesh" width="400" height="400"></canvas>
+        <canvas id="canvas-cracks" width="400" height="400"></canvas>
+        <div class="layer layer-specular"></div>
+    </div>
+</div>
+
+<canvas id="canvas-particles"></canvas>
 
 <script>
     /**
-     * ULTIMATE FRUIT SMASHER ENGINE
-     * Implements 50 distinct stages of structural degradation via canvas fractal pathing.
+     * ==========================================================================
+     * HYPER-DETAILED PHYSICS & RENDERING ENGINE
+     * 50 Stages of Procedural Fracturing
+     * ==========================================================================
      */
 
     const CONFIG = {
-        MAX_STAGE: 50,
-        FRUITS: {
-            watermelon: { inner: '#ff3355', dark: '#800000', juice: 'rgba(255, 51, 85, 0.9)', radius: 175 },
-            apple:      { inner: '#f8f4e6', dark: '#500000', juice: 'rgba(248, 244, 230, 0.9)', radius: 175 },
-            orange:     { inner: '#ffa500', dark: '#804000', juice: 'rgba(255, 165, 0, 0.9)', radius: 175 },
-            coconut:    { inner: '#ffffff', dark: '#000000', juice: 'rgba(255, 255, 255, 0.9)', radius: 175 },
-            pumpkin:    { inner: '#ffa64d', dark: '#662200', juice: 'rgba(255, 166, 77, 0.9)', radius: 175 },
-            pineapple:  { inner: '#ffe680', dark: '#806000', juice: 'rgba(255, 230, 128, 0.9)', radius: 175 }
+        MAX_STAGES: 50,
+        FRUIT_META: {
+            watermelon: { inner: '#ff1133', rind: '#ccffcc', juice: 'rgba(255, 17, 51, 0.8)', dark: '#0a1a0a', density: 1.2 },
+            apple:      { inner: '#ffffe6', rind: '#cccc99', juice: 'rgba(255, 255, 230, 0.7)', dark: '#220000', density: 1.5 },
+            orange:     { inner: '#ffaa00', rind: '#ffffea', juice: 'rgba(255, 170, 0, 0.9)', dark: '#441100', density: 0.8 },
+            coconut:    { inner: '#ffffff', rind: '#593311', juice: 'rgba(255, 255, 255, 0.9)', dark: '#000000', density: 2.5 },
+            pumpkin:    { inner: '#ff9933', rind: '#cc4400', juice: 'rgba(255, 153, 51, 0.8)', dark: '#220500', density: 1.0 },
+            pineapple:  { inner: '#ffff66', rind: '#cca300', juice: 'rgba(255, 255, 102, 0.8)', dark: '#1a1a00', density: 1.3 }
         }
     };
 
-    // DOM Elements
-    const elFruitWrapper = document.getElementById('fruit-wrapper');
-    const elActiveFruit = document.getElementById('active-fruit');
-    const elClickCount = document.getElementById('click-count');
-    const elProgressBar = document.getElementById('progress-bar');
-    const elMenuBtns = document.querySelectorAll('.menu-btn');
+    // DOM Caching
+    const elContainer = document.getElementById('entity-container');
+    const elCounter = document.getElementById('hit-counter');
+    const elIntegrity = document.getElementById('data-integrity');
+    const elNodes = document.getElementById('data-nodes');
+    const elEnergy = document.getElementById('data-energy');
+    const elBar = document.getElementById('damage-bar-fill');
+    const elFlash = document.getElementById('flash');
+    const btns = document.querySelectorAll('.btn-fruit');
     
-    // Canvas Setup
-    const crackCanvas = document.getElementById('crack-canvas');
-    const ctxCrack = crackCanvas.getContext('2d', { willReadFrequently: true });
-    const fxCanvas = document.getElementById('fx-canvas');
-    const ctxFx = fxCanvas.getContext('2d');
+    // Canvas Caching
+    const cvsCracks = document.getElementById('canvas-cracks');
+    const ctxCracks = cvsCracks.getContext('2d', { willReadFrequently: true });
+    const cvsFlesh = document.getElementById('canvas-flesh');
+    const ctxFlesh = cvsFlesh.getContext('2d');
+    const cvsParticles = document.getElementById('canvas-particles');
+    const ctxParticles = cvsParticles.getContext('2d');
 
-    // State
-    let currentState = 0;
-    let currentType = 'watermelon';
-    let crackNodes = [];
-    let particles = [];
-    let isExploded = false;
-    let animationFrameId;
+    // Engine State
+    let state = {
+        hits: 0,
+        type: 'watermelon',
+        nodes: [],
+        particles: [],
+        exploded: false,
+        energyTotal: 0,
+        lastX: 200, lastY: 200
+    };
 
-    // Audio Engine (Synthesized)
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
-    function playSfx(type, intensity) {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        
-        const now = audioCtx.currentTime;
-        
-        if (type === 'hit') {
-            osc.type = intensity > 40 ? 'sawtooth' : 'triangle';
-            osc.frequency.setValueAtTime(150 - (intensity * 2), now);
-            osc.frequency.exponentialRampToValueAtTime(10, now + 0.1);
-            gain.gain.setValueAtTime(0.3 + (intensity * 0.01), now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-            osc.start(now); osc.stop(now + 0.1);
+    // --- AUDIO SYNTHESIS (No external assets) ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const actx = new AudioContext();
+
+    const Synth = {
+        playImpact(stage, density) {
+            if (actx.state === 'suspended') actx.resume();
+            const t = actx.currentTime;
             
-            // Crunch layer
-            if (intensity > 20) {
-                const noise = audioCtx.createBufferSource();
-                const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.1, audioCtx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < buffer.length; i++) data[i] = Math.random() * 2 - 1;
-                noise.buffer = buffer;
-                
-                const noiseFilter = audioCtx.createBiquadFilter();
-                noiseFilter.type = 'lowpass';
-                noiseFilter.frequency.value = 1000 + (intensity * 50);
-                
-                const noiseGain = audioCtx.createGain();
-                noiseGain.gain.setValueAtTime(0.1 + (intensity * 0.005), now);
-                noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                
-                noise.connect(noiseFilter);
-                noiseFilter.connect(noiseGain);
-                noiseGain.connect(audioCtx.destination);
-                noise.start(now);
-            }
-        } else if (type === 'explode') {
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(50, now);
-            osc.frequency.exponentialRampToValueAtTime(0.01, now + 1.0);
-            gain.gain.setValueAtTime(1.0, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
-            osc.start(now); osc.stop(now + 1.0);
-        }
-    }
+            // Low thud
+            const osc1 = actx.createOscillator();
+            const g1 = actx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(150 * density, t);
+            osc1.frequency.exponentialRampToValueAtTime(10, t + 0.2);
+            g1.gain.setValueAtTime(1, t);
+            g1.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+            osc1.connect(g1); g1.connect(actx.destination);
+            osc1.start(t); osc1.stop(t + 0.2);
 
-    // --- PROCEDURAL CRACK ENGINE ---
-    function initCracks() {
-        ctxCrack.clearRect(0, 0, crackCanvas.width, crackCanvas.height);
-        crackNodes = [];
-        // Seed initial impact points
+            // High crack (increases with stage)
+            if (stage > 10) {
+                const osc2 = actx.createOscillator();
+                const g2 = actx.createGain();
+                osc2.type = 'sawtooth';
+                osc2.frequency.setValueAtTime(1000 + (stage * 50), t);
+                osc2.frequency.exponentialRampToValueAtTime(100, t + 0.1);
+                g2.gain.setValueAtTime((stage/50) * 0.5, t);
+                g2.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                
+                // Add distortion
+                const waveShaper = actx.createWaveShaper();
+                waveShaper.curve = this.makeDistortionCurve(400);
+                waveShaper.oversample = '4x';
+                
+                osc2.connect(waveShaper); waveShaper.connect(g2); g2.connect(actx.destination);
+                osc2.start(t); osc2.stop(t + 0.1);
+            }
+        },
+        playExplosion() {
+            const t = actx.currentTime;
+            const bufferSize = actx.sampleRate * 2; 
+            const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+            
+            const noise = actx.createBufferSource();
+            noise.buffer = buffer;
+            
+            const filter = actx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1000, t);
+            filter.frequency.exponentialRampToValueAtTime(10, t + 1.5);
+            
+            const gain = actx.createGain();
+            gain.gain.setValueAtTime(1, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
+            
+            noise.connect(filter); filter.connect(gain); gain.connect(actx.destination);
+            noise.start(t);
+        },
+        makeDistortionCurve(amount) {
+            const k = typeof amount === 'number' ? amount : 50,
+            n_samples = 44100, curve = new Float32Array(n_samples), deg = Math.PI / 180;
+            for (let i = 0; i < n_samples; ++i ) {
+                const x = i * 2 / n_samples - 1;
+                curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) );
+            }
+            return curve;
+        }
+    };
+
+    // --- PROCEDURAL FRACTURE ENGINE ---
+    function initFractures() {
+        ctxCracks.clearRect(0,0,400,400);
+        ctxFlesh.clearRect(0,0,400,400);
+        state.nodes = [];
         for(let i=0; i<3; i++) {
-            crackNodes.push({
-                x: 175 + (Math.random() * 100 - 50),
-                y: 175 + (Math.random() * 100 - 50),
+            state.nodes.push({
+                x: 200 + (Math.random()*40-20), y: 200 + (Math.random()*40-20),
+                vx: 0, vy: 0, mass: 1, type: 'primary',
                 angle: Math.random() * Math.PI * 2,
-                depth: 0,
-                active: true,
-                branches: [],
-                width: 1
+                depth: 0, active: true, width: 1.5
             });
         }
     }
 
-    function advanceCracks(stage) {
-        const config = CONFIG.FRUITS[currentType];
+    function calculateFracture(x, y, stage) {
+        const meta = CONFIG.FRUIT_META[state.type];
+        const cx = 200, cy = 200, r = 190;
         
-        // Define crack styling based on stage (1-50)
-        let crackColor = 'rgba(0,0,0,0.8)';
-        let innerGlow = false;
-        
-        if (stage > 15) crackColor = config.dark;
-        if (stage > 30) {
-            crackColor = config.inner;
-            innerGlow = true;
-        }
-
-        ctxCrack.lineCap = 'round';
-        ctxCrack.lineJoin = 'round';
-
-        // Fractal Growth Algorithm
-        let newNodes = [];
-        
-        crackNodes.forEach(node => {
-            if (!node.active) return;
-            
-            // Draw current segment
-            const length = 5 + Math.random() * (stage * 0.2);
-            const nextX = node.x + Math.cos(node.angle) * length;
-            const nextY = node.y + Math.sin(node.angle) * length;
-            
-            // Keep within bounds
-            const distFromCenter = Math.hypot(nextX - 175, nextY - 175);
-            if (distFromCenter > config.radius - 10) {
-                node.active = false;
-                return;
-            }
-
-            // Render Path
-            ctxCrack.beginPath();
-            ctxCrack.moveTo(node.x, node.y);
-            ctxCrack.lineTo(nextX, nextY);
-            
-            // Thicken lines as stage progresses
-            ctxCrack.lineWidth = node.width + (stage * 0.05);
-            
-            // Style
-            ctxCrack.strokeStyle = crackColor;
-            if (innerGlow) {
-                ctxCrack.shadowBlur = stage * 0.5;
-                ctxCrack.shadowColor = crackColor;
-            } else {
-                ctxCrack.shadowBlur = 0;
-            }
-            
-            ctxCrack.stroke();
-            
-            // Update node
-            node.x = nextX;
-            node.y = nextY;
-            node.depth++;
-
-            // Branching logic (higher stage = more branches)
-            if (Math.random() < 0.1 + (stage * 0.005) && node.depth < 20) {
-                const splitAngle = (Math.random() * 1.5) - 0.75; // -45 to +45 deg
-                newNodes.push({
-                    x: node.x, y: node.y,
-                    angle: node.angle + splitAngle,
-                    depth: node.depth,
-                    active: true,
-                    branches: [],
-                    width: node.width * 0.8
-                });
-                node.angle -= splitAngle; // Diverge main branch
-            }
-            
-            // Chance to die
-            if (Math.random() < 0.05) node.active = false;
+        // Add impact node
+        state.nodes.push({
+            x: x, y: y, angle: Math.atan2(y-cy, x-cx) + Math.PI,
+            depth: 0, active: true, width: 2 + (stage*0.1), type: 'impact'
         });
-        
-        crackNodes = crackNodes.concat(newNodes);
 
-        // Stage-based body CSS filters
-        elActiveFruit.className = `fruit-body fruit-${currentType}`; // reset
-        if (stage > 10 && stage <= 20) elActiveFruit.classList.add('damage-low');
-        if (stage > 20 && stage <= 35) elActiveFruit.classList.add('damage-med');
-        if (stage > 35 && stage < 50) elActiveFruit.classList.add('damage-high');
-        if (stage >= 40) elFruitWrapper.classList.add('anim-critical');
+        let newNodes = [];
+        ctxCracks.lineCap = 'round';
+        ctxCracks.lineJoin = 'bevel';
+
+        state.nodes.forEach(node => {
+            if(!node.active) return;
+
+            // Algorithm for crack propagation
+            let segLength = 8 + (Math.random() * 5 * (stage/10));
+            if(node.type === 'impact') segLength *= 2;
+
+            const nx = node.x + Math.cos(node.angle) * segLength;
+            const ny = node.y + Math.sin(node.angle) * segLength;
+
+            // Boundary check
+            if (Math.hypot(nx-cx, ny-cy) > r) { node.active = false; return; }
+
+            // Render Crack Line (Dark)
+            ctxCracks.beginPath();
+            ctxCracks.moveTo(node.x, node.y);
+            ctxCracks.lineTo(nx, ny);
+            ctxCracks.lineWidth = node.width + (stage*0.05);
+            ctxCracks.strokeStyle = meta.dark;
+            
+            // Add depth via shadow at higher stages
+            if(stage > 20) {
+                ctxCracks.shadowBlur = 4;
+                ctxCracks.shadowColor = '#000';
+            } else {
+                ctxCracks.shadowBlur = 0;
+            }
+            ctxCracks.stroke();
+
+            // Render Flesh Exposure (Stage > 15)
+            if (stage > 15 && Math.random() < (stage/50)) {
+                ctxFlesh.beginPath();
+                ctxFlesh.moveTo(node.x, node.y);
+                ctxFlesh.lineTo(nx, ny);
+                ctxFlesh.lineWidth = (node.width * 0.8) + (stage*0.08);
+                
+                // Multi-layered flesh rendering
+                const grad = ctxFlesh.createLinearGradient(node.x, node.y, nx, ny);
+                grad.addColorStop(0, meta.rind);
+                grad.addColorStop(0.5, meta.inner);
+                grad.addColorStop(1, meta.inner);
+                
+                ctxFlesh.strokeStyle = grad;
+                ctxFlesh.shadowBlur = 10 + (stage*0.5);
+                ctxFlesh.shadowColor = meta.inner;
+                ctxFlesh.stroke();
+            }
+
+            // Update node
+            node.x = nx; node.y = ny; node.depth++;
+
+            // Bifurcation logic
+            let splitChance = 0.15 + (stage*0.01);
+            if (node.type === 'impact') splitChance = 0.8; // Impacts always split fast
+
+            if (Math.random() < splitChance && node.depth < 25) {
+                const spread = (Math.random() * 2) - 1; // -1 to 1 rad
+                newNodes.push({
+                    x: nx, y: ny, angle: node.angle + spread,
+                    depth: node.depth, active: true, width: node.width * 0.7, type: 'branch'
+                });
+                node.angle -= spread * 0.5;
+            }
+
+            if (Math.random() < 0.1) node.active = false;
+            if (node.type === 'impact') node.active = false; // Impact nodes are single-generation seeds
+        });
+
+        state.nodes = state.nodes.concat(newNodes);
     }
 
-    // --- PARTICLE SYSTEM ---
-    function resizeFx() {
-        fxCanvas.width = window.innerWidth;
-        fxCanvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeFx);
-    resizeFx();
-
+    // --- PARTICLE PHYSICS SYSTEM ---
     class Particle {
-        constructor(x, y, type, fruitConf, isEpic = false) {
+        constructor(x, y, meta, isExplosion=false) {
             this.x = x; this.y = y;
-            const angle = Math.random() * Math.PI * 2;
-            const speed = (Math.random() * 15 + 5) * (isEpic ? 3 : 1);
-            this.vx = Math.cos(angle) * speed;
-            this.vy = Math.sin(angle) * speed - (isEpic ? 10 : 5);
-            this.size = Math.random() * (isEpic ? 15 : 6) + 2;
+            const a = Math.random() * Math.PI * 2;
+            const v = (Math.random() * 15 + 5) * (isExplosion ? 4 : 1);
+            this.vx = Math.cos(a) * v;
+            this.vy = Math.sin(a) * v - (isExplosion ? 15 : 5);
             this.life = 1.0;
-            this.decay = Math.random() * 0.02 + (isEpic ? 0.005 : 0.02);
-            this.gravity = 0.5;
-            this.type = type; // 'chunk' or 'juice'
-            this.color = type === 'chunk' ? (Math.random()>0.5 ? fruitConf.inner : fruitConf.dark) : fruitConf.juice;
-            this.rotation = Math.random() * 360;
-            this.rotSpeed = (Math.random() - 0.5) * 20;
+            this.decay = Math.random() * 0.02 + (isExplosion ? 0.005 : 0.02);
+            this.g = 0.6;
+            this.r = Math.random() * (isExplosion ? 12 : 5) + 2;
+            this.type = Math.random() > 0.4 ? 'juice' : 'chunk';
+            
+            if(this.type === 'juice') this.color = meta.juice;
+            else this.color = Math.random()>0.5 ? meta.inner : meta.rind;
+            
+            this.rot = Math.random() * 360;
+            this.rotV = (Math.random()-0.5) * 20;
         }
-
         update() {
-            this.vy += this.gravity;
-            this.x += this.vx;
-            this.y += this.vy;
-            this.rotation += this.rotSpeed;
+            this.vy += this.g;
+            this.x += this.vx; this.y += this.vy;
+            this.rot += this.rotV;
             this.life -= this.decay;
         }
-
         draw(ctx) {
             ctx.save();
             ctx.translate(this.x, this.y);
-            ctx.rotate(this.rotation * Math.PI / 180);
+            ctx.rotate(this.rot * Math.PI/180);
             ctx.globalAlpha = Math.max(0, this.life);
+            ctx.fillStyle = this.color;
             
-            if (this.type === 'juice') {
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(0, 0, this.size, 0, Math.PI * 2);
-                ctx.fill();
+            if(this.type==='juice') {
+                ctx.beginPath(); ctx.arc(0,0,this.r,0,Math.PI*2); ctx.fill();
             } else {
-                ctx.fillStyle = this.color;
-                ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                ctx.fillRect(-this.r/2, -this.r/2, this.r, this.r);
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                ctx.strokeRect(-this.r/2, -this.r/2, this.r, this.r);
             }
             ctx.restore();
         }
     }
 
-    function spawnHitParticles(x, y, amount) {
-        const rect = elFruitWrapper.getBoundingClientRect();
-        const spawnX = x || (rect.left + rect.width/2);
-        const spawnY = y || (rect.top + rect.height/2);
-        const conf = CONFIG.FRUITS[currentType];
+    function resizeCanvas() {
+        cvsParticles.width = window.innerWidth;
+        cvsParticles.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function loopParticles() {
+        ctxParticles.clearRect(0,0,cvsParticles.width, cvsParticles.height);
+        for(let i=state.particles.length-1; i>=0; i--) {
+            let p = state.particles[i];
+            p.update(); p.draw(ctxParticles);
+            if(p.life <= 0 || p.y > cvsParticles.height+50) state.particles.splice(i,1);
+        }
+        requestAnimationFrame(loopParticles);
+    }
+    loopParticles();
+
+    // --- CORE LOGIC ---
+    function updateTelemetry() {
+        const pct = (state.hits / CONFIG.MAX_STAGES) * 100;
+        const intg = Math.max(0, 100 - pct).toFixed(2);
         
-        for(let i=0; i<amount; i++) {
-            particles.push(new Particle(spawnX, spawnY, Math.random()>0.3?'juice':'chunk', conf, false));
+        elCounter.innerText = state.hits.toString().padStart(2, '0');
+        elIntegrity.innerText = `${intg}%`;
+        elNodes.innerText = state.nodes.length;
+        elEnergy.innerText = state.energyTotal.toFixed(2) + ' kJ';
+        
+        elBar.style.width = `${pct}%`;
+        
+        // CSS State Triggers
+        const meta = CONFIG.FRUIT_META[state.type];
+        if (state.hits > 25) {
+            document.documentElement.style.setProperty('--ui-accent', meta.inner);
+        } else {
+            document.documentElement.style.setProperty('--ui-accent', '#ff0044');
+        }
+
+        if (state.hits > 40) {
+            elContainer.classList.add('anim-shake');
+            elContainer.style.setProperty('--shake-dur', `${0.3 - (state.hits-40)*0.02}s`);
+            elContainer.classList.add('anim-pulse');
+        } else {
+            elContainer.classList.remove('anim-shake', 'anim-pulse');
         }
     }
 
     function triggerExplosion() {
-        isExploded = true;
-        playSfx('explode');
-        elFruitWrapper.style.display = 'none';
+        state.exploded = true;
+        Synth.playExplosion();
         
-        const rect = elFruitWrapper.getBoundingClientRect();
+        const rect = elContainer.getBoundingClientRect();
         const cx = rect.left + rect.width/2;
         const cy = rect.top + rect.height/2;
-        const conf = CONFIG.FRUITS[currentType];
-        
-        // Massive particle burst
-        for(let i=0; i<300; i++) {
-            particles.push(new Particle(cx, cy, Math.random()>0.5?'juice':'chunk', conf, true));
-        }
+        const meta = CONFIG.FRUIT_META[state.type];
 
         // Screen Flash
-        document.body.style.backgroundColor = conf.inner;
-        setTimeout(() => { document.body.style.backgroundColor = 'var(--bg-color)'; }, 100);
+        elFlash.style.transition = 'none';
+        elFlash.style.opacity = '1';
+        elFlash.style.background = meta.inner;
+        setTimeout(() => {
+            elFlash.style.transition = 'opacity 1.5s ease-out';
+            elFlash.style.opacity = '0';
+        }, 50);
 
-        // Auto Reset
-        setTimeout(() => { resetGame(); }, 2000);
-    }
+        // Hide Entity
+        elContainer.style.display = 'none';
 
-    function renderLoop() {
-        ctxFx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
-        
-        for(let i = particles.length - 1; i >= 0; i--) {
-            let p = particles[i];
-            p.update();
-            p.draw(ctxFx);
-            if (p.life <= 0 || p.y > fxCanvas.height + 100) {
-                particles.splice(i, 1);
-            }
-        }
-        
-        animationFrameId = requestAnimationFrame(renderLoop);
-    }
-
-    // --- GAME LOGIC ---
-    function updateHUD() {
-        elClickCount.innerHTML = `${currentState}<span style="font-size: 2rem; color: #666;">/50</span>`;
-        const pct = (currentState / CONFIG.MAX_STAGE) * 100;
-        elProgressBar.style.width = `${pct}%`;
-        
-        if (pct < 33) elProgressBar.style.backgroundColor = '#5dbb63';
-        else if (pct < 66) elProgressBar.style.backgroundColor = '#ffcc00';
-        else if (pct < 90) elProgressBar.style.backgroundColor = '#ff3b30';
-        else {
-            elProgressBar.style.backgroundColor = '#ffffff';
-            elProgressBar.style.boxShadow = '0 0 20px #fff';
-        }
-    }
-
-    function handleHit(e) {
-        if (isExploded || currentState >= CONFIG.MAX_STAGE) return;
-        
-        currentState++;
-        updateHUD();
-        playSfx('hit', currentState);
-        
-        // Visual Impact
-        elFruitWrapper.classList.remove('anim-hit');
-        void elFruitWrapper.offsetWidth; // Trigger reflow
-        
-        // Determine hit vector
-        const rect = elFruitWrapper.getBoundingClientRect();
-        const cx = rect.left + rect.width/2;
-        const cy = rect.top + rect.height/2;
-        
-        let clientX = cx, clientY = cy;
-        if (e && e.type.includes('mouse')) { clientX = e.clientX; clientY = e.clientY; }
-        else if (e && e.type.includes('touch')) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
-
-        const dirX = (cx - clientX) * 0.2;
-        const dirY = (cy - clientY) * 0.2;
-        
-        elFruitWrapper.style.setProperty('--jx', `${dirX}px`);
-        elFruitWrapper.style.setProperty('--jy', `${dirY}px`);
-        elFruitWrapper.classList.add('anim-hit');
-
-        // Execute stage degradation
-        advanceCracks(currentState);
-        
-        // Spawn minor particles based on stage
-        if (currentState > 10) {
-            const amount = Math.floor(currentState / 5);
-            spawnHitParticles(clientX, clientY, amount);
+        // Massive Particle Burst
+        for(let i=0; i<400; i++) {
+            state.particles.push(new Particle(cx, cy, meta, true));
         }
 
-        if (currentState >= CONFIG.MAX_STAGE) {
-            triggerExplosion();
-        }
+        // Auto Reboot
+        setTimeout(() => {
+            resetEngine();
+        }, 3000);
     }
 
-    function resetGame() {
-        currentState = 0;
-        isExploded = false;
-        elFruitWrapper.style.display = 'block';
-        elFruitWrapper.classList.remove('anim-critical');
-        elFruitWrapper.className = '';
-        elActiveFruit.className = `fruit-body fruit-${currentType}`;
-        elProgressBar.style.boxShadow = '0 0 10px var(--accent)';
-        initCracks();
-        updateHUD();
-    }
+    function handleInput(x, y) {
+        if(state.exploded || state.hits >= CONFIG.MAX_STAGES) return;
 
-    function switchFruit(type) {
-        if (currentState > 0 && currentState < CONFIG.MAX_STAGE && !isExploded) {
-            // Visual feedback instead of blocking alert to keep game flow fast
-            particles = []; // clear particles to signify reset
-        }
-        currentType = type;
+        state.hits++;
+        const meta = CONFIG.FRUIT_META[state.type];
         
-        elMenuBtns.forEach(btn => btn.classList.remove('active'));
-        document.querySelector(`[data-fruit="${type}"]`).classList.add('active');
+        // Telemetry Math
+        const impactEnergy = (Math.random() * 5 + 10) * meta.density;
+        state.energyTotal += impactEnergy;
+
+        Synth.playImpact(state.hits, meta.density);
         
-        resetGame();
+        // Visual Hit Response
+        elContainer.classList.remove('anim-impact');
+        void elContainer.offsetWidth; // Force reflow
+        elContainer.classList.add('anim-impact');
+
+        // Map screen coords to local coords
+        const rect = elContainer.getBoundingClientRect();
+        const lx = x - rect.left;
+        const ly = y - rect.top;
+
+        calculateFracture(lx, ly, state.hits);
+        updateTelemetry();
+
+        // Emit local particles
+        const px = x; const py = y;
+        const amt = Math.floor(state.hits / 3) + 2;
+        for(let i=0; i<amt; i++) state.particles.push(new Particle(px, py, meta, false));
+
+        if(state.hits >= CONFIG.MAX_STAGES) triggerExplosion();
     }
 
-    // --- EVENT BINDING ---
-    // Fast click/touch handling without delay
-    const eventOptions = { passive: false };
+    function resetEngine() {
+        state.hits = 0;
+        state.exploded = false;
+        state.energyTotal = 0;
+        elContainer.style.display = 'block';
+        elContainer.className = `fruit-${state.type}`;
+        initFractures();
+        updateTelemetry();
+        document.documentElement.style.setProperty('--ui-accent', '#ff0044');
+    }
+
+    function changeFruit(type) {
+        state.type = type;
+        btns.forEach(b => b.classList.remove('active'));
+        document.querySelector(`[data-type="${type}"]`).classList.add('active');
+        state.particles = []; // Clear current system
+        resetEngine();
+    }
+
+    // --- EVENT LISTENERS ---
+    const evOpt = { passive: false };
     
-    elFruitWrapper.addEventListener('mousedown', (e) => { e.preventDefault(); handleHit(e); }, eventOptions);
-    elFruitWrapper.addEventListener('touchstart', (e) => { e.preventDefault(); handleHit(e); }, eventOptions);
+    // Direct Entity Binding
+    elContainer.addEventListener('mousedown', (e) => { e.preventDefault(); handleInput(e.clientX, e.clientY); }, evOpt);
+    elContainer.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(e.touches[0].clientX, e.touches[0].clientY); }, evOpt);
 
-    elMenuBtns.forEach(btn => {
-        btn.addEventListener('click', () => switchFruit(btn.getAttribute('data-fruit')));
+    // Global binding for fast clicking outside bounds when intense
+    document.body.addEventListener('mousedown', (e) => {
+        if(e.target.closest('#hud')) return;
+        if(e.target !== elContainer && !elContainer.contains(e.target)) {
+            // Fake coordinate if clicked outside but want to register hit
+            const rect = elContainer.getBoundingClientRect();
+            handleInput(rect.left + rect.width/2 + (Math.random()*100-50), rect.top + rect.height/2 + (Math.random()*100-50));
+        }
+    }, evOpt);
+
+    btns.forEach(b => {
+        b.addEventListener('click', () => changeFruit(b.getAttribute('data-type')));
     });
 
     // Boot
-    initCracks();
-    renderLoop();
+    initFractures();
+    updateTelemetry();
 
 </script>
 </body>
