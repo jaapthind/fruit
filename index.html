@@ -2,1050 +2,769 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>3D FRUIT DESTRUCTOR ENGINE - PHOTOREALISTIC EDITION</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<title>3D PROCEDURAL FRUIT DESTRUCTOR ENGINE</title>
 <style>
-/* ==========================================================================
-   GLOBAL RESET & ENGINE VARIABLES
-   ========================================================================== */
-*, *::before, *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    user-select: none;
-    -webkit-user-drag: none;
-    touch-action: manipulation;
-}
-
-:root {
-    --bg-void: #050508;
-    --ui-glass: rgba(15, 15, 20, 0.7);
-    --ui-border: rgba(255, 255, 255, 0.1);
-    --ui-text: #e0e0f0;
-    --ui-accent: #00ffcc;
-    
-    /* 3D Lighting Variables */
-    --light-x: 50%;
-    --light-y: -20%;
-    --light-color: rgba(255,255,255,0.9);
-    --shadow-color: rgba(0,0,0,0.8);
-    --ambient-light: rgba(255,255,255,0.1);
-    
-    /* Damage Mapping Variables (updated via JS) */
-    --damage-depth: 0px;
-    --exposure: 0;
-    
-    /* PHOTOREALISTIC FRUIT MATRICES */
-    /* Watermelon */
-    --wm-rind-dk: #0d2613; --wm-rind-md: #1f5027; --wm-rind-lt: #458f4d; --wm-rind-yl: #dbe0a8;
-    --wm-flesh-out: #f7a8b8; --wm-flesh-mid: #e63946; --wm-flesh-core: #b3001b; --wm-seed: #050505;
-    
-    /* Apple (Fuji/Gala mix) */
-    --ap-skin-dk: #4a0000; --ap-skin-red: #ba181b; --ap-skin-yl: #ffb703; --ap-skin-spot: rgba(255,255,200,0.4);
-    --ap-flesh-out: #fdfcdc; --ap-flesh-in: #fefee3; --ap-core: #c2b280; --ap-stem: #3b2818;
-    
-    /* Orange (Navel) */
-    --or-skin-dk: #b33c00; --or-skin-md: #f48c06; --or-skin-lt: #ffba08; --or-pore-shadow: rgba(100,20,0,0.6);
-    --or-pith: #fffae6; --or-flesh-dk: #e85d04; --or-flesh-lt: #ff9f1c; --or-juice: rgba(255,159,28,0.9);
-    
-    /* Coconut */
-    --co-shell-dk: #1a0f05; --co-shell-md: #3b2512; --co-shell-lt: #5c3a21; --co-hair: #0f0803;
-    --co-meat-edge: #cccccc; --co-meat: #ffffff; --co-water: rgba(255,255,255,0.7); --co-eye: #050302;
-    
-    /* Pumpkin */
-    --pu-skin-dk: #8a2500; --pu-skin-md: #d64900; --pu-skin-lt: #ff7300; --pu-crease: #4d1500;
-    --pu-flesh: #ff9d00; --pu-gut: #e67e00; --pu-stem-dk: #283618; --pu-stem-lt: #606c38;
-    
-    /* Pineapple */
-    --pi-scale-dk: #6b4d00; --pi-scale-md: #9e7300; --pi-scale-lt: #e6b800; --pi-crevice: #332200;
-    --pi-flesh-dk: #ffd500; --pi-flesh-lt: #ffff66; --pi-leaf-dk: #132a13; --pi-leaf-lt: #31572c;
-}
-
-body {
-    width: 100vw; height: 100vh; overflow: hidden;
-    background-color: var(--bg-void);
-    background-image: radial-gradient(circle at center, #11111a 0%, var(--bg-void) 100%);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: var(--ui-text);
-    perspective: 1200px; /* Base 3D perspective */
-}
-
-/* ==========================================================================
-   UI COMPONENTS
-   ========================================================================== */
-#hud-overlay {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    pointer-events: none; z-index: 100;
-    display: flex; flex-direction: column; justify-content: space-between;
-}
-
-#toolbar {
-    padding: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); pointer-events: auto;
-}
-
-.btn-fruit {
-    background: var(--ui-glass); border: 1px solid var(--ui-border);
-    color: #888; padding: 10px 20px; font-size: 12px; font-weight: bold;
-    text-transform: uppercase; letter-spacing: 2px; border-radius: 20px;
-    cursor: pointer; transition: 0.3s; backdrop-filter: blur(5px);
-}
-
-.btn-fruit:hover { color: #fff; border-color: rgba(255,255,255,0.4); transform: translateY(-2px); }
-.btn-fruit.active { color: #fff; border-color: var(--ui-accent); box-shadow: 0 0 15px rgba(0,255,204,0.4); }
-
-#telemetry {
-    padding: 20px; display: flex; justify-content: center; width: 100%;
-    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-}
-
-.data-panel {
-    background: var(--ui-glass); border: 1px solid var(--ui-border);
-    padding: 15px 30px; border-radius: 10px; backdrop-filter: blur(10px);
-    display: flex; gap: 40px; align-items: center;
-}
-
-.data-item { display: flex; flex-direction: column; }
-.data-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
-.data-value { font-size: 24px; font-weight: 300; font-family: monospace; color: var(--ui-accent); }
-
-#progress-track {
-    width: 200px; height: 4px; background: rgba(255,255,255,0.1);
-    border-radius: 2px; overflow: hidden; margin-top: 10px;
-}
-#progress-fill {
-    height: 100%; width: 0%; background: var(--ui-accent);
-    transition: width 0.2s, background-color 0.3s;
-}
-
-/* ==========================================================================
-   3D STAGE & RESPONSIVE ENTITY CONTAINER
-   ========================================================================== */
-#stage {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    display: flex; justify-content: center; align-items: center;
-    transform-style: preserve-3d;
-}
-
-/* Responsive scaling based on viewport minimum dimension */
-#entity-wrapper {
-    position: relative;
-    width: clamp(250px, 60vmin, 600px);
-    height: clamp(250px, 60vmin, 600px);
-    cursor: crosshair;
-    transform-style: preserve-3d;
-    /* Base idle rotation */
-    animation: idleSpin 20s linear infinite;
-}
-
-@keyframes idleSpin {
-    0% { transform: rotateY(0deg) rotateX(10deg); }
-    100% { transform: rotateY(360deg) rotateX(10deg); }
-}
-
-/* Drop shadow locked to floor */
-#entity-shadow {
-    position: absolute;
-    bottom: -15%; left: 10%; width: 80%; height: 20%;
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.8) 0%, transparent 70%);
-    border-radius: 50%; filter: blur(10px);
-    transform: rotateX(80deg); transform-origin: center; pointer-events: none;
-}
-
-/* All layers share the same responsive dimensions */
-.layer-3d {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    border-radius: 50%; transform-style: preserve-3d;
-    backface-visibility: hidden; pointer-events: none;
-}
-
-/* Dynamic Lighting Overlay */
-#lighting-rig {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    border-radius: inherit; z-index: 50; pointer-events: none; mix-blend-mode: overlay;
-    background: radial-gradient(
-        circle at var(--light-x) var(--light-y),
-        var(--light-color) 0%,
-        transparent 40%,
-        var(--shadow-color) 100%
-    );
-    transition: background 0.1s;
-}
-
-/* Specular reflection mapping */
-#specular-rig {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    border-radius: inherit; z-index: 60; pointer-events: none; mix-blend-mode: screen;
-}
-
-/* Render Canvases for procedural damage */
-.canvas-layer {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    border-radius: inherit; z-index: 30; pointer-events: none;
-}
-
-#canvas-flesh { z-index: 20; } /* Beneath skin */
-#canvas-cracks { z-index: 30; mix-blend-mode: multiply; }
-#canvas-normal { z-index: 40; mix-blend-mode: overlay; opacity: 0.5; } /* Bump mapping simulation */
-
-/* ==========================================================================
-   EXTREME PHOTOREALISTIC CSS 3D ARCHITECTURES
-   Each fruit requires ~150-200 lines equivalent of precise mapping
-   ========================================================================== */
-
-/* --------------------------------------------------------------------------
-   1. WATERMELON - Photorealistic Model
-   -------------------------------------------------------------------------- */
-.model-watermelon .layer-base {
-    /* Ambient base color */
-    background: var(--wm-rind-md);
-    /* Form shaping via inset shadows */
-    box-shadow: 
-        inset -5vmin -5vmin 10vmin rgba(0,0,0,0.9),
-        inset 2vmin 2vmin 5vmin rgba(255,255,255,0.2);
-    /* Elongated shape typical of watermelons */
-    border-radius: 46% 54% 48% 52% / 54% 48% 52% 46%;
-}
-
-/* Macro texture: Tiger stripes */
-.model-watermelon .layer-tex-macro {
-    background: repeating-radial-gradient(
-        ellipse at 50% 50%, 
-        transparent 0%, transparent 6%, 
-        var(--wm-rind-dk) 7%, var(--wm-rind-dk) 10%
-    );
-    border-radius: inherit; opacity: 0.9; mix-blend-mode: multiply;
-    filter: blur(2px) url(#noise-distort);
-}
-
-/* Micro texture: Yellowish ground spot and subtle mottling */
-.model-watermelon .layer-tex-micro {
-    background: 
-        radial-gradient(circle at 70% 80%, rgba(219, 224, 168, 0.4) 0%, transparent 30%),
-        repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(93,187,99,0.3) 16px, rgba(93,187,99,0.3) 25px);
-    border-radius: inherit; mix-blend-mode: overlay;
-    filter: url(#noise-grain);
-}
-
-/* Specular map specific to waxy watermelon skin */
-.model-watermelon #specular-rig {
-    background: radial-gradient(
-        ellipse at 35% 25%, 
-        rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 15%, transparent 40%
-    );
-    filter: blur(1px);
-}
-
-/* Inner Flesh representation (revealed via canvas) */
-.model-watermelon[data-state="core"] .layer-base {
-    background: radial-gradient(circle at 50% 50%, var(--wm-flesh-core) 0%, var(--wm-flesh-mid) 70%, var(--wm-rind-lt) 95%, var(--wm-rind-dk) 100%);
-    box-shadow: inset -5vmin -5vmin 10vmin rgba(0,0,0,0.8);
-}
-
-
-/* --------------------------------------------------------------------------
-   2. APPLE - Photorealistic Model (Fuji/Gala hybrid)
-   -------------------------------------------------------------------------- */
-.model-apple .layer-base {
-    background: radial-gradient(circle at 40% 30%, var(--ap-skin-red) 0%, var(--ap-skin-dk) 80%);
-    box-shadow: 
-        inset -6vmin -4vmin 8vmin rgba(0,0,0,0.9),
-        inset 1.5vmin 2vmin 4vmin rgba(255,150,150,0.3);
-    border-radius: 50% 50% 48% 48% / 60% 60% 40% 40%;
-}
-
-/* Macro texture: Yellow/Green vertical striping */
-.model-apple .layer-tex-macro {
-    background: repeating-linear-gradient(
-        90deg, 
-        transparent 0%, transparent 4%, 
-        rgba(255, 183, 3, 0.2) 5%, transparent 6%
-    );
-    border-radius: inherit; mix-blend-mode: screen; filter: blur(1px) url(#noise-distort);
-}
-
-/* Micro texture: Lenticels (pores/spots) */
-.model-apple .layer-tex-micro {
-    background-image: radial-gradient(var(--ap-skin-spot) 1px, transparent 2px);
-    background-size: 1.5vmin 1.5vmin; background-position: 0 0, 0.75vmin 0.75vmin;
-    border-radius: inherit; mix-blend-mode: overlay; filter: url(#noise-grain); opacity: 0.8;
-}
-
-/* 3D Geometry: Stem cavity */
-.model-apple::before {
-    content: ''; position: absolute; top: -2%; left: 45%; width: 10%; height: 5%;
-    background: radial-gradient(ellipse at center, #110000 0%, transparent 80%);
-    border-radius: 50%; box-shadow: inset 0 1vmin 1vmin rgba(0,0,0,0.9);
-}
-
-/* 3D Geometry: Stem */
-.model-apple::after {
-    content: ''; position: absolute; top: -10%; left: 48%; width: 3%; height: 12%;
-    background: linear-gradient(90deg, #1a0d00, var(--ap-stem), #110000);
-    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-    box-shadow: 0.5vmin 0.5vmin 1vmin rgba(0,0,0,0.8); z-index: -1;
-    transform-origin: bottom center; transform: rotate(15deg);
-}
-
-.model-apple #specular-rig {
-    background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,0.5) 25%, rgba(255,255,255,0.1) 35%, transparent 45%);
-    mix-blend-mode: soft-light;
-}
-
-
-/* --------------------------------------------------------------------------
-   3. ORANGE - Photorealistic Model (Navel)
-   -------------------------------------------------------------------------- */
-.model-orange .layer-base {
-    background: radial-gradient(circle at 35% 35%, var(--or-skin-lt) 0%, var(--or-skin-md) 60%, var(--or-skin-dk) 100%);
-    box-shadow: 
-        inset -5vmin -5vmin 8vmin rgba(0,0,0,0.85),
-        inset 2vmin 2vmin 5vmin rgba(255,255,255,0.3);
-    border-radius: 49% 51% 50% 50% / 51% 49% 50% 50%;
-}
-
-/* Macro texture: Color variation and subtle bruising */
-.model-orange .layer-tex-macro {
-    background: radial-gradient(circle at 70% 70%, rgba(179, 60, 0, 0.3) 0%, transparent 40%);
-    border-radius: inherit; mix-blend-mode: multiply; filter: url(#noise-distort);
-}
-
-/* Micro texture: Deep pore simulation (Normal mapping approximation) */
-.model-orange .layer-tex-micro {
-    background-image: 
-        radial-gradient(var(--or-pore-shadow) 15%, transparent 16%),
-        radial-gradient(rgba(255,255,255,0.2) 15%, transparent 16%);
-    background-size: 1vmin 1vmin; background-position: 0 0, 0.2vmin 0.2vmin;
-    border-radius: inherit; mix-blend-mode: overlay;
-    filter: url(#noise-grain) drop-shadow(0 0.1vmin 0 rgba(255,255,255,0.3));
-}
-
-/* 3D Geometry: Navel end */
-.model-orange::before {
-    content: ''; position: absolute; bottom: 10%; left: 45%; width: 10%; height: 10%;
-    background: var(--or-skin-dk); border-radius: 50%;
-    box-shadow: inset 0 0.5vmin 1vmin #000, 0 0.2vmin 0.5vmin rgba(255,255,255,0.2);
-    border: 0.2vmin solid var(--or-skin-md); filter: url(#noise-grain);
-}
-
-
-/* --------------------------------------------------------------------------
-   4. COCONUT - Photorealistic Model
-   -------------------------------------------------------------------------- */
-.model-coconut .layer-base {
-    background: radial-gradient(circle at 45% 45%, var(--co-shell-lt) 0%, var(--co-shell-md) 50%, var(--co-shell-dk) 90%);
-    box-shadow: 
-        inset -4vmin -4vmin 9vmin rgba(0,0,0,0.95),
-        inset 1vmin 1vmin 3vmin rgba(255,255,255,0.1);
-    border-radius: 48% 52% 49% 51% / 51% 49% 52% 48%;
-}
-
-/* Macro texture: Hairy shell fibers */
-.model-coconut .layer-tex-macro {
-    background: repeating-linear-gradient(
-        75deg, 
-        transparent, transparent 0.3vmin, 
-        rgba(0,0,0,0.6) 0.4vmin, rgba(0,0,0,0.6) 0.7vmin, 
-        rgba(255,255,255,0.05) 0.8vmin
-    );
-    border-radius: inherit; mix-blend-mode: multiply; filter: url(#noise-distort); opacity: 0.9;
-}
-
-/* Micro texture: Cross-grain fibers and dirt */
-.model-coconut .layer-tex-micro {
-    background: repeating-linear-gradient(
-        -35deg, 
-        transparent, transparent 0.5vmin, 
-        rgba(0,0,0,0.5) 0.6vmin, rgba(0,0,0,0.5) 1vmin
-    );
-    border-radius: inherit; filter: url(#noise-grain); opacity: 0.6; mix-blend-mode: overlay;
-}
-
-/* 3D Geometry: Three eyes */
-.model-coconut .layer-highlight {
-    background: 
-        radial-gradient(circle at 35% 25%, var(--co-eye) 3%, transparent 4%),
-        radial-gradient(circle at 60% 20%, var(--co-eye) 3%, transparent 4%),
-        radial-gradient(circle at 48% 40%, var(--co-eye) 3%, transparent 4%);
-    background-repeat: no-repeat; border-radius: inherit;
-    filter: drop-shadow(0 0.3vmin 0.2vmin rgba(255,255,255,0.1)) inset 0 0.5vmin 1vmin #000;
-}
-
-
-/* --------------------------------------------------------------------------
-   5. PUMPKIN - Photorealistic Model
-   -------------------------------------------------------------------------- */
-.model-pumpkin .layer-base {
-    background: var(--pu-skin-md);
-    box-shadow: 
-        inset -7vmin -7vmin 12vmin rgba(0,0,0,0.9),
-        inset 3vmin 3vmin 8vmin rgba(255,255,255,0.2);
-    border-radius: 46% 46% 42% 42% / 50% 50% 46% 46%;
-}
-
-/* Macro texture: Vertical creases/ribs (Deep bump mapping) */
-.model-pumpkin .layer-tex-macro {
-    background: repeating-linear-gradient(
-        90deg, 
-        transparent 0%, transparent 8%, 
-        var(--pu-crease) 10%, rgba(0,0,0,0.7) 12%, 
-        var(--pu-skin-lt) 15%, transparent 18%
-    );
-    border-radius: inherit; mix-blend-mode: multiply; filter: url(#noise-distort);
-}
-
-/* Micro texture: Skin bumps and dirt */
-.model-pumpkin .layer-tex-micro {
-    background: radial-gradient(rgba(0,0,0,0.2) 1px, transparent 2px);
-    background-size: 0.5vmin 0.5vmin;
-    border-radius: inherit; filter: url(#noise-grain); mix-blend-mode: overlay; opacity: 0.5;
-}
-
-/* 3D Geometry: Thick Stem */
-.model-pumpkin::after {
-    content: ''; position: absolute; top: -12%; left: 45%; width: 10%; height: 15%;
-    background: linear-gradient(to right, #0a1400, var(--pu-stem-lt), #050a00);
-    border-radius: 10% 10% 20% 20%;
-    box-shadow: inset 0 0 1.5vmin #000, 1vmin 1.5vmin 2.5vmin rgba(0,0,0,0.8); z-index: -1;
-    clip-path: polygon(25% 0, 75% 0, 100% 100%, 0% 100%);
-    filter: url(#noise-grain);
-}
-
-.model-pumpkin #specular-rig {
-    background: repeating-linear-gradient(
-        90deg, 
-        transparent 0%, transparent 12%, 
-        rgba(255,255,255,0.2) 14%, transparent 16%
-    );
-    border-radius: inherit; mix-blend-mode: screen; filter: blur(0.5vmin);
-}
-
-
-/* --------------------------------------------------------------------------
-   6. PINEAPPLE - Photorealistic Model
-   -------------------------------------------------------------------------- */
-.model-pineapple .layer-base {
-    background: radial-gradient(ellipse at 50% 40%, var(--pi-scale-md) 0%, var(--pi-scale-dk) 85%, #111 100%);
-    box-shadow: 
-        inset -5vmin -5vmin 9vmin rgba(0,0,0,0.9),
-        inset 2vmin 2vmin 6vmin rgba(255,255,255,0.2);
-    border-radius: 42% 42% 48% 48% / 55% 55% 45% 45%;
-}
-
-/* Macro texture: Hexagonal scale pattern */
-.model-pineapple .layer-tex-macro {
-    background-image: 
-        linear-gradient(135deg, var(--pi-crevice) 25%, transparent 25%),
-        linear-gradient(225deg, var(--pi-crevice) 25%, transparent 25%),
-        linear-gradient(45deg, var(--pi-crevice) 25%, transparent 25%),
-        linear-gradient(315deg, var(--pi-crevice) 25%, transparent 25%);
-    background-position: 3.5vmin 0, 3.5vmin 0, 0 0, 0 0; background-size: 7vmin 7vmin;
-    border-radius: inherit; mix-blend-mode: overlay; opacity: 0.95;
-    filter: drop-shadow(0 0.5vmin 0.5vmin rgba(0,0,0,0.8));
-}
-
-/* Micro texture: Scale spikes */
-.model-pineapple .layer-tex-micro {
-    background-image: radial-gradient(circle at 3.5vmin 1.5vmin, rgba(255,255,255,0.4) 0.3vmin, transparent 0.6vmin);
-    background-size: 7vmin 7vmin; border-radius: inherit; mix-blend-mode: color-dodge;
-}
-
-/* 3D Geometry: Crown (Leaves) */
-.model-pineapple::before {
-    content: ''; position: absolute; top: -35%; left: 10%; width: 80%; height: 40%;
-    background: 
-        linear-gradient(to top, var(--pi-leaf-lt), transparent),
-        repeating-linear-gradient(15deg, transparent, transparent 1.5vmin, rgba(0,0,0,0.5) 1.6vmin, rgba(0,0,0,0.5) 2.2vmin);
-    clip-path: polygon(50% 0, 30% 20%, 40% 10%, 10% 40%, 30% 30%, 0 60%, 25% 50%, 0 80%, 30% 70%, 20% 100%, 80% 100%, 70% 70%, 100% 80%, 75% 50%, 100% 60%, 70% 30%, 90% 40%, 60% 10%, 70% 20%);
-    z-index: -1; filter: drop-shadow(0 2vmin 3vmin rgba(0,0,0,0.9));
-}
-
-/* ==========================================================================
-   PHYSICS & DAMAGE ANIMATIONS
-   ========================================================================== */
-/* The core impact jolt. Transforms scale and 3D translation */
-.anim-impact { animation: impactJolt 0.15s cubic-bezier(0.2, 1, 0.3, 1) forwards; }
-
-@keyframes impactJolt {
-    0% { transform: scale(1) translate3d(0,0,0) rotate(0deg); filter: brightness(1.5) contrast(1.2); }
-    30% { transform: scale(0.9) translate3d(var(--vec-x), var(--vec-y), -50px) rotate(calc(var(--vec-r) * 1deg)); filter: brightness(0.8); }
-    60% { transform: scale(1.05) translate3d(calc(var(--vec-x) * -0.5), calc(var(--vec-y) * -0.5), 20px); }
-    100% { transform: scale(1) translate3d(0,0,0) rotate(0deg); filter: brightness(1); }
-}
-
-/* Critical state high-frequency shudder */
-.anim-critical { animation: shudder 0.1s infinite alternate; }
-
-@keyframes shudder {
-    0% { transform: translate3d(-2px, 1px, 0) rotate(-0.5deg); }
-    100% { transform: translate3d(2px, -1px, 0) rotate(0.5deg); }
-}
-
-/* Screen Flash overlay */
-#flash-fx {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: #fff; opacity: 0; pointer-events: none; z-index: 9999;
-}
-
-/* Particle Canvas */
-#particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 500; }
-
+    :root {
+        --bg: #050508;
+        --ui-bg: rgba(10, 15, 20, 0.8);
+        --ui-border: rgba(255, 255, 255, 0.1);
+        --text: #e0e0f0;
+        --accent: #ff0044;
+        --accent-glow: rgba(255, 0, 68, 0.5);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+    body {
+        width: 100vw; height: 100vh; overflow: hidden; background: var(--bg);
+        font-family: 'Courier New', Courier, monospace; color: var(--text);
+    }
+    #webgl-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
+    #ui-layer { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
+    #toolbar { display: flex; justify-content: center; gap: 8px; padding: 15px; background: linear-gradient(180deg, rgba(0,0,0,0.9), transparent); pointer-events: auto; flex-wrap: wrap; }
+    .btn { background: var(--ui-bg); border: 1px solid var(--ui-border); color: #888; padding: 10px 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; font-size: 11px; cursor: pointer; transition: 0.3s; border-radius: 4px; backdrop-filter: blur(5px); }
+    .btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+    .btn.active { color: #fff; border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+    #hud { padding: 30px; display: flex; justify-content: center; background: linear-gradient(0deg, rgba(0,0,0,0.9), transparent); pointer-events: auto; }
+    .panel { background: var(--ui-bg); border: 1px solid var(--ui-border); padding: 20px 40px; border-radius: 8px; backdrop-filter: blur(10px); display: flex; align-items: center; gap: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+    .stat { display: flex; flex-direction: column; }
+    .stat-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+    .stat-val { font-size: 28px; font-weight: bold; color: var(--accent); }
+    #prog-bg { width: 250px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+    #prog-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00ffcc, #ffff00, #ff0044); transition: width 0.1s; }
+    #flash { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: #fff; opacity: 0; pointer-events: none; z-index: 100; transition: opacity 0.1s; }
+    #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; pointer-events: none; z-index: 5; opacity: 0.5; }
+    #crosshair::before, #crosshair::after { content: ''; position: absolute; background: rgba(255,255,255,0.5); }
+    #crosshair::before { top: 9px; left: 0; width: 20px; height: 2px; }
+    #crosshair::after { top: 0; left: 9px; width: 2px; height: 20px; }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-<svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
-    <defs>
-        <filter id="noise-distort">
-            <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="15" xChannelSelector="R" yChannelSelector="G" />
-        </filter>
-        <filter id="noise-grain">
-            <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="4" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G" />
-        </filter>
-    </defs>
-</svg>
+<div id="flash"></div>
+<div id="webgl-container"></div>
+<div id="crosshair"></div>
 
-<div id="flash-fx"></div>
-
-<div id="hud-overlay">
+<div id="ui-layer">
     <div id="toolbar">
-        <button class="btn-fruit active" data-type="watermelon">Watermelon</button>
-        <button class="btn-fruit" data-type="apple">Apple</button>
-        <button class="btn-fruit" data-type="orange">Orange</button>
-        <button class="btn-fruit" data-type="coconut">Coconut</button>
-        <button class="btn-fruit" data-type="pumpkin">Pumpkin</button>
-        <button class="btn-fruit" data-type="pineapple">Pineapple</button>
+        <button class="btn active" data-type="watermelon">Watermelon</button>
+        <button class="btn" data-type="apple">Apple</button>
+        <button class="btn" data-type="orange">Orange</button>
+        <button class="btn" data-type="coconut">Coconut</button>
+        <button class="btn" data-type="pumpkin">Pumpkin</button>
     </div>
     
-    <div id="telemetry">
-        <div class="data-panel">
-            <div class="data-item">
-                <span class="data-label">Stage</span>
-                <span class="data-value" id="val-stage" style="font-size: 32px; font-weight: bold;">0<span style="font-size: 16px; color:#666;">/50</span></span>
-                <div id="progress-track"><div id="progress-fill"></div></div>
+    <div id="hud">
+        <div class="panel">
+            <div class="stat">
+                <span class="stat-label">Structural Integrity</span>
+                <span class="stat-val" id="ui-stage">0 / 50</span>
+                <div id="prog-bg"><div id="prog-fill"></div></div>
             </div>
-            <div class="data-item">
-                <span class="data-label">Integrity</span>
-                <span class="data-value" id="val-integrity">100.00%</span>
-            </div>
-            <div class="data-item">
-                <span class="data-label">K-Energy</span>
-                <span class="data-value" id="val-energy">0.00 kJ</span>
+            <div class="stat">
+                <span class="stat-label">Mass Displaced</span>
+                <span class="stat-val" id="ui-mass">0.00 kg</span>
             </div>
         </div>
     </div>
 </div>
 
-<div id="stage">
-    <div id="entity-shadow"></div>
-    <div id="entity-wrapper" class="model-watermelon">
-        <div class="layer-3d layer-base"></div>
-        <div class="layer-3d layer-tex-macro"></div>
-        <div class="layer-3d layer-tex-micro"></div>
-        
-        <canvas class="canvas-layer" id="canvas-flesh"></canvas>
-        <canvas class="canvas-layer" id="canvas-normal"></canvas> <canvas class="canvas-layer" id="canvas-cracks"></canvas>
-        
-        <div id="lighting-rig"></div>
-        <div id="specular-rig"></div>
-        <div class="layer-3d layer-highlight"></div>
-    </div>
-</div>
-
-<canvas id="particles"></canvas>
-
 <script>
-/**
- * ==========================================================================================
- * 3D FRUIT DESTRUCTOR ENGINE - CORE LOGIC
- * Implements procedural mesh deformation simulation via canvas, dynamic lighting, 
- * particle physics, and Web Audio synthesis. Over 1000 lines of logic.
- * ==========================================================================================
- */
-
-// --- 1. CONFIGURATION & DATA DICTIONARY ---
-const CFG = {
-    MAX_STAGE: 50,
-    PARTICLE_LIMIT: 2000,
-    PHYSICS_FPS: 60
-};
-
-const MATERIALS = {
-    watermelon: {
-        density: 1.2, brittle: 0.4, fluid: 0.9,
-        color: { out: '#1f5027', in: '#f7a8b8', core: '#b3001b', juice: 'rgba(255,20,50,0.85)', dark: '#0a1a0a' }
-    },
-    apple: {
-        density: 1.6, brittle: 0.7, fluid: 0.6,
-        color: { out: '#ba181b', in: '#fdfcdc', core: '#fefee3', juice: 'rgba(250,240,220,0.7)', dark: '#220000' }
-    },
-    orange: {
-        density: 0.9, brittle: 0.2, fluid: 1.0,
-        color: { out: '#ffba08', in: '#fffae6', core: '#ff9f1c', juice: 'rgba(255,160,30,0.9)', dark: '#441100' }
-    },
-    coconut: {
-        density: 3.5, brittle: 0.9, fluid: 0.4,
-        color: { out: '#3b2512', in: '#cccccc', core: '#ffffff', juice: 'rgba(255,255,255,0.95)', dark: '#050302' }
-    },
-    pumpkin: {
-        density: 1.1, brittle: 0.5, fluid: 0.5,
-        color: { out: '#d64900', in: '#ff9d00', core: '#e67e00', juice: 'rgba(255,150,0,0.8)', dark: '#2b0c00' }
-    },
-    pineapple: {
-        density: 1.4, brittle: 0.6, fluid: 0.8,
-        color: { out: '#9e7300', in: '#ffd500', core: '#ffff66', juice: 'rgba(255,230,100,0.8)', dark: '#1a1100' }
+/** ---------------------------------------------------------------------------
+ * INLINE SIMPLEX NOISE IMPLEMENTATION (For Procedural Textures & Geometry)
+ * --------------------------------------------------------------------------- */
+const F3 = 1.0 / 3.0, G3 = 1.0 / 6.0;
+class SimplexNoise {
+    constructor(random = Math.random) {
+        this.p = new Uint8Array(256);
+        this.perm = new Uint8Array(512);
+        this.permMod12 = new Uint8Array(512);
+        for (let i = 0; i < 256; i++) this.p[i] = Math.floor(random() * 256);
+        for (let i = 0; i < 512; i++) {
+            this.perm[i] = this.p[i & 255];
+            this.permMod12[i] = (this.perm[i] % 12);
+        }
     }
-};
-
-// --- 2. MATH UTILITIES ---
-class Vec2 {
-    constructor(x, y) { this.x = x; this.y = y; }
-    add(v) { this.x += v.x; this.y += v.y; return this; }
-    sub(v) { this.x -= v.x; this.y -= v.y; return this; }
-    mul(n) { this.x *= n; this.y *= n; return this; }
-    mag() { return Math.sqrt(this.x * this.x + this.y * this.y); }
-    norm() { let m = this.mag(); if(m!==0){this.x/=m; this.y/=m;} return this; }
-    copy() { return new Vec2(this.x, this.y); }
-    static dist(v1, v2) { return Math.hypot(v2.x - v1.x, v2.y - v1.y); }
-    static rand(min, max) { return new Vec2(Math.random()*(max-min)+min, Math.random()*(max-min)+min); }
-    static fromAng(angle, length) { return new Vec2(Math.cos(angle)*length, Math.sin(angle)*length); }
+    noise3D(xin, yin, zin) {
+        const permMod12 = this.permMod12, perm = this.perm;
+        let n0, n1, n2, n3;
+        const s = (xin + yin + zin) * F3;
+        const i = Math.floor(xin + s), j = Math.floor(yin + s), k = Math.floor(zin + s);
+        const t = (i + j + k) * G3;
+        const X0 = i - t, Y0 = j - t, Z0 = k - t;
+        const x0 = xin - X0, y0 = yin - Y0, z0 = zin - Z0;
+        let i1, j1, k1, i2, j2, k2;
+        if (x0 >= y0) {
+            if (y0 >= z0) { i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 1; k2 = 0; }
+            else if (x0 >= z0) { i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 0; k2 = 1; }
+            else { i1 = 0; j1 = 0; k1 = 1; i2 = 1; j2 = 0; k2 = 1; }
+        } else {
+            if (y0 < z0) { i1 = 0; j1 = 0; k1 = 1; i2 = 0; j2 = 1; k2 = 1; }
+            else if (x0 < z0) { i1 = 0; j1 = 1; k1 = 0; i2 = 0; j2 = 1; k2 = 1; }
+            else { i1 = 0; j1 = 1; k1 = 0; i2 = 1; j2 = 1; k2 = 0; }
+        }
+        const x1 = x0 - i1 + G3, y1 = y0 - j1 + G3, z1 = z0 - k1 + G3;
+        const x2 = x0 - i2 + 2.0 * G3, y2 = y0 - j2 + 2.0 * G3, z2 = z0 - k2 + 2.0 * G3;
+        const x3 = x0 - 1.0 + 3.0 * G3, y3 = y0 - 1.0 + 3.0 * G3, z3 = z0 - 1.0 + 3.0 * G3;
+        const ii = i & 255, jj = j & 255, kk = k & 255;
+        let t0 = 0.6 - x0 * x0 - y0 * y0 - z0 * z0;
+        if (t0 < 0) n0 = 0.0; else {
+            const gi0 = permMod12[ii + perm[jj + perm[kk]]] * 3;
+            t0 *= t0; n0 = t0 * t0 * (this.grad3[gi0] * x0 + this.grad3[gi0 + 1] * y0 + this.grad3[gi0 + 2] * z0);
+        }
+        let t1 = 0.6 - x1 * x1 - y1 * y1 - z1 * z1;
+        if (t1 < 0) n1 = 0.0; else {
+            const gi1 = permMod12[ii + i1 + perm[jj + j1 + perm[kk + k1]]] * 3;
+            t1 *= t1; n1 = t1 * t1 * (this.grad3[gi1] * x1 + this.grad3[gi1 + 1] * y1 + this.grad3[gi1 + 2] * z1);
+        }
+        let t2 = 0.6 - x2 * x2 - y2 * y2 - z2 * z2;
+        if (t2 < 0) n2 = 0.0; else {
+            const gi2 = permMod12[ii + i2 + perm[jj + j2 + perm[kk + k2]]] * 3;
+            t2 *= t2; n2 = t2 * t2 * (this.grad3[gi2] * x2 + this.grad3[gi2 + 1] * y2 + this.grad3[gi2 + 2] * z2);
+        }
+        let t3 = 0.6 - x3 * x3 - y3 * y3 - z3 * z3;
+        if (t3 < 0) n3 = 0.0; else {
+            const gi3 = permMod12[ii + 1 + perm[jj + 1 + perm[kk + 1]]] * 3;
+            t3 *= t3; n3 = t3 * t3 * (this.grad3[gi3] * x3 + this.grad3[gi3 + 1] * y3 + this.grad3[gi3 + 2] * z3);
+        }
+        return 32.0 * (n0 + n1 + n2 + n3);
+    }
 }
+SimplexNoise.prototype.grad3 = new Float32Array([1,1,0, -1,1,0, 1,-1,0, -1,-1,0, 1,0,1, -1,0,1, 1,0,-1, -1,0,-1, 0,1,1, 0,-1,1, 0,1,-1, 0,-1,-1]);
+const simplex = new SimplexNoise();
 
-function rand(min, max) { return Math.random() * (max - min) + min; }
-
-// --- 3. WEB AUDIO SYNTHESIS ---
-class AudioFX {
+/** ---------------------------------------------------------------------------
+ * AUDIO SYNTHESIS ENGINE
+ * --------------------------------------------------------------------------- */
+class AudioEngine {
     constructor() {
         this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        this.out = this.ctx.createGain();
-        this.out.gain.value = 0.7;
-        this.out.connect(this.ctx.destination);
+        this.master = this.ctx.createGain();
+        this.master.gain.value = 0.6;
+        this.master.connect(this.ctx.destination);
     }
-    
-    playHit(stage, density, brittle) {
-        if(this.ctx.state === 'suspended') this.ctx.resume();
-        const t = this.ctx.currentTime;
-        
-        // Impact thud (varies by density)
+    resume() { if (this.ctx.state === 'suspended') this.ctx.resume(); }
+    playHit(intensity, density) {
+        this.resume(); const t = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
-        const g1 = this.ctx.createGain();
+        const gain = this.ctx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(120 * density, t);
-        osc.frequency.exponentialRampToValueAtTime(20, t + 0.15);
-        g1.gain.setValueAtTime(1, t);
-        g1.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
-        osc.connect(g1); g1.connect(this.out);
+        osc.frequency.setValueAtTime(150 * density - (intensity*1.5), t);
+        osc.frequency.exponentialRampToValueAtTime(10, t + 0.15);
+        gain.gain.setValueAtTime(0.8, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+        osc.connect(gain); gain.connect(this.master);
         osc.start(t); osc.stop(t + 0.15);
 
-        // Crack/Snap (varies by brittleness and stage)
-        if(brittle > 0.4 || stage > 10) {
+        if (intensity > 10) {
             const bSize = this.ctx.sampleRate * 0.1;
             const buf = this.ctx.createBuffer(1, bSize, this.ctx.sampleRate);
             const data = buf.getChannelData(0);
             for(let i=0; i<bSize; i++) data[i] = Math.random()*2-1;
-            
             const noise = this.ctx.createBufferSource();
             noise.buffer = buf;
-            
             const filter = this.ctx.createBiquadFilter();
-            filter.type = 'highpass';
-            filter.frequency.value = 800 + (stage * 40);
-            
-            const g2 = this.ctx.createGain();
-            g2.gain.setValueAtTime(brittle * 0.8 * (stage/50), t);
-            g2.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-            
-            noise.connect(filter); filter.connect(g2); g2.connect(this.out);
+            filter.type = 'highpass'; filter.frequency.value = 500 + (intensity*20);
+            const ngain = this.ctx.createGain();
+            ngain.gain.setValueAtTime((intensity/50)*0.5, t);
+            ngain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+            noise.connect(filter); filter.connect(ngain); ngain.connect(this.master);
             noise.start(t);
         }
     }
-
-    playExplosion() {
-        if(this.ctx.state === 'suspended') this.ctx.resume();
-        const t = this.ctx.currentTime;
-        
-        const bSize = this.ctx.sampleRate * 2.0;
+    playExplode() {
+        this.resume(); const t = this.ctx.currentTime;
+        const bSize = this.ctx.sampleRate * 2;
         const buf = this.ctx.createBuffer(1, bSize, this.ctx.sampleRate);
         const data = buf.getChannelData(0);
         for(let i=0; i<bSize; i++) data[i] = Math.random()*2-1;
-        
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = buf;
-        
+        const noise = this.ctx.createBufferSource(); noise.buffer = buf;
         const filter = this.ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(2000, t);
-        filter.frequency.exponentialRampToValueAtTime(30, t + 1.5);
-        
-        const g = this.ctx.createGain();
-        g.gain.setValueAtTime(1.5, t);
-        g.gain.exponentialRampToValueAtTime(0.01, t + 2.0);
-        
-        noise.connect(filter); filter.connect(g); g.connect(this.out);
+        filter.type = 'lowpass'; filter.frequency.setValueAtTime(2000, t);
+        filter.frequency.exponentialRampToValueAtTime(40, t + 1.5);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(1.5, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 2);
+        noise.connect(filter); filter.connect(gain); gain.connect(this.master);
         noise.start(t);
     }
 }
-const SFX = new AudioFX();
+const audio = new AudioEngine();
 
-// --- 4. PARTICLE PHYSICS ---
-class Particle {
-    constructor(x, y, mat, isExp) {
-        this.pos = new Vec2(x, y);
-        const a = rand(0, Math.PI*2);
-        const s = rand(2, 12) * (isExp ? 4 : 1);
-        this.vel = Vec2.fromAng(a, s);
-        this.vel.y -= isExp ? 10 : 3;
-        this.acc = new Vec2(0, 0.4); // Gravity
-        
-        this.life = 1.0;
-        this.decay = rand(0.01, 0.03) / (isExp ? 0.6 : 1);
-        
-        this.type = Math.random() < mat.fluid ? 'fluid' : 'solid';
-        this.rad = this.type === 'fluid' ? rand(2, 6) : rand(3, 10);
-        if(isExp) this.rad *= 1.5;
-        
-        if(this.type === 'fluid') this.color = mat.color.juice;
-        else {
-            const r = Math.random();
-            if(r < 0.3) this.color = mat.color.out;
-            else if(r < 0.7) this.color = mat.color.in;
-            else this.color = mat.color.core;
-        }
-        
-        this.rot = rand(0, 360);
-        this.rotV = rand(-15, 15);
-    }
-    update() {
-        this.vel.add(this.acc);
-        this.pos.add(this.vel);
-        this.rot += this.rotV;
-        this.life -= this.decay;
-    }
-    draw(ctx) {
-        if(this.life <= 0) return;
-        ctx.save();
-        ctx.translate(this.pos.x, this.pos.y);
-        ctx.rotate(this.rot * Math.PI/180);
-        ctx.globalAlpha = Math.max(0, this.life);
-        ctx.fillStyle = this.color;
-        
-        if(this.type === 'fluid') {
-            ctx.beginPath(); ctx.arc(0,0,this.rad,0,Math.PI*2); ctx.fill();
-        } else {
-            ctx.fillRect(-this.rad/2, -this.rad/2, this.rad, this.rad);
-        }
-        ctx.restore();
-    }
-}
+/** ---------------------------------------------------------------------------
+ * PROCEDURAL TEXTURE & MESH GENERATOR (EXTREME DETAIL)
+ * --------------------------------------------------------------------------- */
+const FRUIT_DATA = {
+    watermelon: { colorIn: 0xff1133, colorOut: 0x1f5027, density: 1.2, rMod: 0.1, mRough: 0.2, mMetal: 0.0 },
+    apple: { colorIn: 0xfdfcdc, colorOut: 0xba181b, density: 1.5, rMod: 0.3, mRough: 0.1, mMetal: 0.1 },
+    orange: { colorIn: 0xff9f1c, colorOut: 0xffba08, density: 0.9, rMod: 0.8, mRough: 0.6, mMetal: 0.0 },
+    coconut: { colorIn: 0xffffff, colorOut: 0x3b2512, density: 3.0, rMod: 0.9, mRough: 0.9, mMetal: 0.0 },
+    pumpkin: { colorIn: 0xff9d00, colorOut: 0xd64900, density: 1.1, rMod: 0.6, mRough: 0.7, mMetal: 0.0 }
+};
 
-class PEngine {
-    constructor() {
-        this.cvs = document.getElementById('particles');
-        this.ctx = this.cvs.getContext('2d', { alpha: true });
-        this.parts = [];
-        this.resize();
-        window.addEventListener('resize', () => this.resize());
-    }
-    resize() {
-        this.cvs.width = window.innerWidth;
-        this.cvs.height = window.innerHeight;
-    }
-    emit(x, y, amt, mat, isExp=false) {
-        for(let i=0; i<amt; i++) {
-            if(this.parts.length > CFG.PARTICLE_LIMIT) this.parts.shift();
-            this.parts.push(new Particle(x, y, mat, isExp));
-        }
-    }
-    tick() {
-        this.ctx.clearRect(0,0,this.cvs.width, this.cvs.height);
-        for(let i=this.parts.length-1; i>=0; i--) {
-            let p = this.parts[i];
-            p.update(); p.draw(this.ctx);
-            if(p.life<=0 || p.pos.y>this.cvs.height+50) this.parts.splice(i,1);
-        }
-    }
-}
+class ProceduralFruit {
+    constructor(type) {
+        this.type = type;
+        this.data = FRUIT_DATA[type];
+        this.texSize = 1024;
+        
+        this.canvasAlbedo = document.createElement('canvas');
+        this.canvasAlbedo.width = this.texSize; this.canvasAlbedo.height = this.texSize;
+        this.ctxAlbedo = this.canvasAlbedo.getContext('2d', {alpha: false});
+        
+        this.canvasBump = document.createElement('canvas');
+        this.canvasBump.width = this.texSize; this.canvasBump.height = this.texSize;
+        this.ctxBump = this.canvasBump.getContext('2d', {alpha: false});
 
-// --- 5. PROCEDURAL 3D DEFORMATION ---
-class DeformationEngine {
-    constructor() {
-        this.c_flesh = document.getElementById('canvas-flesh');
-        this.ctx_f = this.c_flesh.getContext('2d');
-        this.c_crack = document.getElementById('canvas-cracks');
-        this.ctx_c = this.c_crack.getContext('2d', { willReadFrequently: true });
-        this.c_norm = document.getElementById('canvas-normal');
-        this.ctx_n = this.c_norm.getContext('2d');
+        this.canvasDamage = document.createElement('canvas');
+        this.canvasDamage.width = this.texSize; this.canvasDamage.height = this.texSize;
+        this.ctxDamage = this.canvasDamage.getContext('2d', {alpha: true});
+
+        this.texAlbedo = new THREE.CanvasTexture(this.canvasAlbedo);
+        this.texBump = new THREE.CanvasTexture(this.canvasBump);
+        this.texDamage = new THREE.CanvasTexture(this.canvasDamage);
         
-        this.nodes = [];
-        this.size = 0;
-        this.center = new Vec2(0,0);
-        this.radius = 0;
-    }
-    
-    syncSize(pxSize) {
-        this.size = pxSize;
-        this.center = new Vec2(pxSize/2, pxSize/2);
-        this.radius = pxSize/2 - 5;
+        this.texAlbedo.anisotropy = 16;
+        this.texBump.anisotropy = 16;
+
+        this.generateBaseTextures();
+        this.geometry = this.generateGeometry();
         
-        const cArr = [this.c_flesh, this.c_crack, this.c_norm];
-        cArr.forEach(c => {
-            // Keep high-res internal canvas relative to CSS display size
-            c.width = 1000; 
-            c.height = 1000;
+        // Custom Shader Material using onBeforeCompile to inject dynamic canvas damage
+        this.material = new THREE.MeshStandardMaterial({
+            map: this.texAlbedo,
+            bumpMap: this.texBump,
+            bumpScale: 0.05,
+            roughness: this.data.mRough,
+            metalness: this.data.mMetal,
+            color: 0xffffff
         });
+
+        this.material.onBeforeCompile = (shader) => {
+            shader.uniforms.damageMap = { value: this.texDamage };
+            shader.uniforms.colorIn = { value: new THREE.Color(this.data.colorIn) };
+            shader.fragmentShader = `
+                uniform sampler2D damageMap;
+                uniform vec3 colorIn;
+                ${shader.fragmentShader}
+            `.replace(
+                `#include <map_fragment>`,
+                `
+                #include <map_fragment>
+                vec4 dmg = texture2D(damageMap, vUv);
+                
+                // dmg.r = deep crater (black)
+                // dmg.g = flesh exposure (colorIn)
+                // dmg.b = structural crack (dark)
+                
+                if(dmg.g > 0.0) {
+                    diffuseColor.rgb = mix(diffuseColor.rgb, colorIn, dmg.g);
+                }
+                if(dmg.b > 0.0) {
+                    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.0), dmg.b * 0.8);
+                }
+                if(dmg.r > 0.0) {
+                    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.05), dmg.r);
+                }
+                `
+            );
+        };
+
+        this.mesh = new THREE.Mesh(this.geometry, this.material);
+        this.mesh.castShadow = true;
+        this.mesh.receiveShadow = true;
     }
 
-    reset() {
-        this.ctx_f.clearRect(0,0,1000,1000);
-        this.ctx_c.clearRect(0,0,1000,1000);
-        this.ctx_n.clearRect(0,0,1000,1000);
-        this.nodes = [];
+    generateBaseTextures() {
+        const dA = this.ctxAlbedo.createImageData(this.texSize, this.texSize);
+        const dB = this.ctxBump.createImageData(this.texSize, this.texSize);
+        
+        const cOut = new THREE.Color(this.data.colorOut);
+        
+        for(let y=0; y<this.texSize; y++) {
+            for(let x=0; x<this.texSize; x++) {
+                const i = (y * this.texSize + x) * 4;
+                const u = x / this.texSize;
+                const v = y / this.texSize;
+                
+                // Map UV to Sphere coords for continuous noise
+                const theta = u * Math.PI * 2;
+                const phi = v * Math.PI;
+                const nx = Math.sin(phi) * Math.cos(theta);
+                const ny = Math.sin(phi) * Math.sin(theta);
+                const nz = Math.cos(phi);
+
+                let r=cOut.r*255, g=cOut.g*255, b=cOut.b*255;
+                let bump = 128;
+
+                if (this.type === 'watermelon') {
+                    const n1 = simplex.noise3D(nx*2, ny*2, nz*2);
+                    const n2 = simplex.noise3D(nx*10, ny*10, nz*10);
+                    const stripe = Math.sin(theta * 12 + n1 * 2);
+                    if (stripe > 0.3 + (n2*0.2)) {
+                        r*=0.4; g*=0.5; b*=0.4; // Dark green stripes
+                    }
+                    bump = 128 + (n2 * 10);
+                } 
+                else if (this.type === 'apple') {
+                    const n1 = simplex.noise3D(nx*5, ny*20, nz*5); // Vertical streaks
+                    const n2 = simplex.noise3D(nx*50, ny*50, nz*50); // Spots
+                    r = Math.min(255, r + n1*40);
+                    g = Math.min(255, g + n1*20);
+                    if(n2 > 0.7) { r=255; g=255; b=200; } // Yellowish lenticels
+                    bump = 128 + (n2 * 5);
+                }
+                else if (this.type === 'orange') {
+                    const n1 = simplex.noise3D(nx*40, ny*40, nz*40);
+                    r += n1*10; g += n1*10;
+                    bump = 128 + (n1 * 80); // High frequency pore bump
+                }
+                else if (this.type === 'coconut') {
+                    const n1 = simplex.noise3D(nx*3, ny*30, nz*3); // Fibers
+                    r += n1*30; g += n1*20; b += n1*10;
+                    bump = 128 + (n1 * 60);
+                }
+                else if (this.type === 'pumpkin') {
+                    const rib = Math.cos(theta * 10);
+                    const n1 = simplex.noise3D(nx*10, ny*10, nz*10);
+                    if(rib > 0.8) { r*=0.7; g*=0.7; } // Crease shadows
+                    r += n1*15; g += n1*10;
+                    bump = 128 - (rib * 100) + (n1*10); // Deep ribs
+                }
+
+                dA.data[i] = r; dA.data[i+1] = g; dA.data[i+2] = b; dA.data[i+3] = 255;
+                dB.data[i] = bump; dB.data[i+1] = bump; dB.data[i+2] = bump; dB.data[i+3] = 255;
+            }
+        }
+        this.ctxAlbedo.putImageData(dA, 0, 0);
+        this.ctxBump.putImageData(dB, 0, 0);
+        this.ctxDamage.clearRect(0,0,this.texSize, this.texSize);
+        
+        this.texAlbedo.needsUpdate = true;
+        this.texBump.needsUpdate = true;
+        this.texDamage.needsUpdate = true;
     }
 
-    impact(lx, ly, stage, mat) {
-        // Map local DOM coords to 1000x1000 internal canvas space
-        const cx = (lx / this.size) * 1000;
-        const cy = (ly / this.size) * 1000;
-        const imp = new Vec2(cx, cy);
-        const internalRadius = 490;
-        const internalCenter = new Vec2(500, 500);
+    generateGeometry() {
+        const geo = new THREE.SphereGeometry(2.5, 128, 128);
+        const pos = geo.attributes.position;
+        const uvs = geo.attributes.uv;
+        
+        for(let i=0; i<pos.count; i++) {
+            let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+            const u = uvs.getX(i), v = uvs.getY(i);
+            let rad = Math.sqrt(x*x + y*y + z*z);
+            
+            if(this.type === 'watermelon') {
+                y *= 1.2; // Elongate
+            } else if(this.type === 'apple') {
+                if(y > 2.0) y -= (y-2.0)*2.0; // Top indent
+                if(y < -2.0) y += (-2.0-y)*1.5; // Bottom indent
+            } else if(this.type === 'pumpkin') {
+                if(y > 1.8) y -= (y-1.8)*1.5;
+                if(y < -1.8) y += (-1.8-y)*1.5;
+                const theta = u * Math.PI * 2;
+                const rib = Math.cos(theta * 10);
+                x += (x/rad) * rib * 0.2;
+                z += (z/rad) * rib * 0.2;
+            }
+            
+            // Apply global procedural noise to geometry shape
+            const n = simplex.noise3D(x, y, z) * 0.05 * this.data.rMod;
+            x += (x/rad) * n; y += (y/rad) * n; z += (z/rad) * n;
+            
+            pos.setXYZ(i, x, y, z);
+        }
+        geo.computeVertexNormals();
+        return geo;
+    }
 
-        // Seed new fracture vectors
-        const numSeeds = Math.floor(stage/4) + 2;
-        for(let i=0; i<numSeeds; i++) {
-            this.nodes.push({
-                pos: imp.copy(), ang: rand(0, Math.PI*2),
-                depth: 0, active: true, w: 5 + (stage*0.2)
-            });
+    applyDamage(uv, stage) {
+        const cx = uv.x * this.texSize;
+        const cy = (1 - uv.y) * this.texSize; // ThreeJS UV y is inverted for canvas
+        
+        const ctx = this.ctxDamage;
+        
+        // Channel R = Deep Black Crater
+        // Channel G = ColorIn Flesh
+        // Channel B = Structural Dark Crack
+
+        // 1. Structural Cracks (B channel)
+        ctx.beginPath();
+        for(let i=0; i<3+(stage/10); i++) {
+            let px = cx, py = cy;
+            ctx.moveTo(px, py);
+            const angleBase = Math.random() * Math.PI * 2;
+            for(let j=0; j<5+(stage/5); j++) {
+                const a = angleBase + (Math.random()-0.5);
+                const d = Math.random() * 20 * (1 + stage/10);
+                px += Math.cos(a)*d; py += Math.sin(a)*d;
+                ctx.lineTo(px, py);
+            }
+        }
+        ctx.lineWidth = 2 + (stage/5);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'miter';
+        ctx.strokeStyle = `rgba(0,0,255, ${0.4 + stage/100})`;
+        ctx.stroke();
+
+        // 2. Flesh Exposure (G channel)
+        if (stage > 10) {
+            ctx.beginPath();
+            for(let i=0; i<2+(stage/15); i++) {
+                let px = cx, py = cy;
+                ctx.moveTo(px, py);
+                const angleBase = Math.random() * Math.PI * 2;
+                for(let j=0; j<3+(stage/8); j++) {
+                    const a = angleBase + (Math.random()-0.5)*0.5;
+                    const d = Math.random() * 15 * (1 + stage/20);
+                    px += Math.cos(a)*d; py += Math.sin(a)*d;
+                    ctx.lineTo(px, py);
+                }
+            }
+            ctx.lineWidth = 6 + (stage/4);
+            ctx.strokeStyle = `rgba(0,255,0, ${0.5 + stage/100})`;
+            ctx.stroke();
         }
 
-        // Normal map dent
-        this.ctx_n.beginPath();
-        const grd = this.ctx_n.createRadialGradient(cx, cy, 0, cx, cy, 50 + stage*2);
-        grd.addColorStop(0, 'rgba(0,0,0,0.8)');
-        grd.addColorStop(1, 'rgba(0,0,0,0)');
-        this.ctx_n.fillStyle = grd;
-        this.ctx_n.arc(cx, cy, 50+stage*2, 0, Math.PI*2);
-        this.ctx_n.fill();
+        // 3. Deep Impact Crater (R channel)
+        ctx.beginPath();
+        ctx.arc(cx, cy, 5 + (stage/2), 0, Math.PI*2);
+        const radGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 10 + stage);
+        radGrad.addColorStop(0, 'rgba(255,0,0,1)');
+        radGrad.addColorStop(1, 'rgba(255,0,0,0)');
+        ctx.fillStyle = radGrad;
+        ctx.fill();
 
-        // Graph Propagation
-        let nextNodes = [];
-        this.ctx_c.lineCap = 'round'; this.ctx_c.lineJoin = 'miter';
-        this.ctx_f.lineCap = 'round';
-        
-        this.nodes.forEach(n => {
-            if(!n.active) return;
-            
-            const len = rand(20, 50) * mat.brittle * (1+(stage*0.03));
-            const nPos = new Vec2(n.pos.x + Math.cos(n.ang)*len, n.pos.y + Math.sin(n.ang)*len);
-            
-            // Sphere bounds check
-            if(Vec2.dist(internalCenter, nPos) > internalRadius) { n.active = false; return; }
-
-            // Crack rendering
-            this.ctx_c.beginPath();
-            this.ctx_c.moveTo(n.pos.x, n.pos.y);
-            this.ctx_c.lineTo(nPos.x, nPos.y);
-            this.ctx_c.lineWidth = n.w + (stage*0.1);
-            this.ctx_c.strokeStyle = mat.color.dark;
-            if(stage > 25) { this.ctx_c.shadowBlur = stage*0.3; this.ctx_c.shadowColor = '#000'; }
-            this.ctx_c.stroke();
-
-            // Flesh rendering (Deep exposure)
-            if(stage > 12 && Math.random() < mat.brittle + 0.2) {
-                this.ctx_f.beginPath();
-                this.ctx_f.moveTo(n.pos.x, n.pos.y);
-                this.ctx_f.lineTo(nPos.x, nPos.y);
-                this.ctx_f.lineWidth = (n.w * 2) + (stage*0.3);
-                
-                const fGrd = this.ctx_f.createLinearGradient(n.pos.x, n.pos.y, nPos.x, nPos.y);
-                fGrd.addColorStop(0, mat.color.in);
-                fGrd.addColorStop(0.5, mat.color.core);
-                fGrd.addColorStop(1, mat.color.dark);
-                
-                this.ctx_f.strokeStyle = fGrd;
-                this.ctx_f.shadowBlur = 15;
-                this.ctx_f.shadowColor = mat.color.core;
-                this.ctx_f.stroke();
-            }
-
-            n.pos = nPos; n.depth++;
-            
-            // Branching
-            if(Math.random() < 0.25 + (stage*0.01) && n.depth < 15) {
-                const s = rand(-1.2, 1.2);
-                nextNodes.push({ pos: n.pos.copy(), ang: n.ang + s, depth: n.depth, active: true, w: n.w * 0.7 });
-                n.ang -= s*0.5;
-            }
-            if(Math.random() < 0.2) n.active = false;
-        });
-        this.nodes = this.nodes.concat(nextNodes);
+        this.texDamage.needsUpdate = true;
     }
 }
 
-// --- 6. GAME CONTROLLER ---
-class Game {
-    constructor() {
-        this.st = { stage: 0, nrg: 0, type: 'watermelon', exp: false };
-        this.fx = new PEngine();
-        this.def = new DeformationEngine();
+/** ---------------------------------------------------------------------------
+ * PARTICLE PHYSICS ENGINE (InstancedMesh)
+ * --------------------------------------------------------------------------- */
+class ParticleSystem {
+    constructor(scene) {
+        this.maxParticles = 5000;
+        this.geo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+        this.mat = new THREE.MeshStandardMaterial({ roughness: 0.8, metalness: 0.0 });
+        this.mesh = new THREE.InstancedMesh(this.geo, this.mat, this.maxParticles);
+        this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        this.mesh.castShadow = true;
+        scene.add(this.mesh);
         
-        this.el = {
-            wrap: document.getElementById('entity-wrapper'),
-            light: document.getElementById('lighting-rig'),
-            flash: document.getElementById('flash-fx'),
-            vStg: document.getElementById('val-stage'),
-            vInt: document.getElementById('val-integrity'),
-            vNrg: document.getElementById('val-energy'),
-            pBar: document.getElementById('progress-fill')
+        this.dummy = new THREE.Object3D();
+        this.color = new THREE.Color();
+        this.particles = [];
+        this.pIndex = 0;
+    }
+
+    emit(origin, normal, count, isExplosion, colorHex) {
+        this.color.setHex(colorHex);
+        for(let i=0; i<count; i++) {
+            const idx = this.pIndex % this.maxParticles;
+            
+            // Randomize trajectory along normal or spherical if explosion
+            let dir = normal.clone();
+            if(isExplosion) {
+                dir.set(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
+            } else {
+                dir.x += (Math.random()-0.5)*2;
+                dir.y += (Math.random()-0.5)*2;
+                dir.z += (Math.random()-0.5)*2;
+                dir.normalize();
+            }
+            
+            const speed = (Math.random() * 5 + 2) * (isExplosion ? 3 : 1);
+            
+            this.particles[idx] = {
+                active: true,
+                pos: origin.clone(),
+                vel: dir.multiplyScalar(speed),
+                rot: new THREE.Vector3(Math.random(), Math.random(), Math.random()),
+                rotVel: new THREE.Vector3((Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5),
+                scale: (Math.random() * 0.5 + 0.5) * (isExplosion ? 2 : 1),
+                life: 1.0,
+                decay: (Math.random() * 0.02 + 0.01) / (isExplosion ? 0.5 : 1)
+            };
+            
+            this.mesh.setColorAt(idx, this.color);
+            this.pIndex++;
+        }
+        this.mesh.instanceColor.needsUpdate = true;
+    }
+
+    update(dt) {
+        let needsUpdate = false;
+        for(let i=0; i<this.maxParticles; i++) {
+            const p = this.particles[i];
+            if(p && p.active) {
+                p.vel.y -= 9.8 * dt; // Gravity
+                p.pos.addScaledVector(p.vel, dt);
+                p.rot.add(p.rotVel);
+                p.life -= p.decay;
+
+                // Floor collision
+                if(p.pos.y < -3) {
+                    p.pos.y = -3;
+                    p.vel.y *= -0.5;
+                    p.vel.x *= 0.8; p.vel.z *= 0.8;
+                }
+
+                if(p.life <= 0) {
+                    p.active = false;
+                    this.dummy.position.set(0,-1000,0);
+                    this.dummy.scale.set(0,0,0);
+                } else {
+                    this.dummy.position.copy(p.pos);
+                    this.dummy.rotation.set(p.rot.x, p.rot.y, p.rot.z);
+                    this.dummy.scale.setScalar(p.scale * p.life);
+                }
+                
+                this.dummy.updateMatrix();
+                this.mesh.setMatrixAt(i, this.dummy.matrix);
+                needsUpdate = true;
+            }
+        }
+        if(needsUpdate) this.mesh.instanceMatrix.needsUpdate = true;
+    }
+}
+
+/** ---------------------------------------------------------------------------
+ * MAIN 3D ENGINE CONTROLLER
+ * --------------------------------------------------------------------------- */
+class Engine3D {
+    constructor() {
+        this.container = document.getElementById('webgl-container');
+        this.scene = new THREE.Scene();
+        this.scene.fog = new THREE.FogExp2(0x050508, 0.05);
+        
+        this.camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
+        this.camera.position.set(0, 0, 10);
+        
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.container.appendChild(this.renderer.domElement);
+        
+        this.setupLighting();
+        
+        // Environment Floor
+        const floorGeo = new THREE.PlaneGeometry(50, 50);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x050508, roughness: 0.1, metalness: 0.0 });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -3;
+        floor.receiveShadow = true;
+        this.scene.add(floor);
+
+        this.particles = new ParticleSystem(this.scene);
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
+        
+        this.clock = new THREE.Clock();
+        this.targetObj = null;
+        this.baseGroup = new THREE.Group();
+        this.scene.add(this.baseGroup);
+        
+        this.state = { hits: 0, maxHits: 50, mass: 0, type: 'watermelon', exploded: false };
+        this.ui = {
+            stage: document.getElementById('ui-stage'),
+            mass: document.getElementById('ui-mass'),
+            pFill: document.getElementById('prog-fill'),
+            flash: document.getElementById('flash')
         };
         
-        this.bind();
-        this.loop();
+        this.initInteraction();
+        this.loadFruit('watermelon');
         
-        // Initial setup
-        this.resize();
-        window.addEventListener('resize', () => this.resize());
+        window.addEventListener('resize', () => this.onResize());
+        this.renderer.setAnimationLoop(() => this.render());
     }
 
-    resize() {
-        const rect = this.el.wrap.getBoundingClientRect();
-        this.def.syncSize(rect.width);
+    setupLighting() {
+        const amb = new THREE.AmbientLight(0xffffff, 0.3);
+        this.scene.add(amb);
+        
+        this.dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        this.dirLight.position.set(5, 10, 5);
+        this.dirLight.castShadow = true;
+        this.dirLight.shadow.mapSize.width = 2048;
+        this.dirLight.shadow.mapSize.height = 2048;
+        this.scene.add(this.dirLight);
+        
+        const backLight = new THREE.PointLight(0x00ffcc, 0.5, 20);
+        backLight.position.set(-5, 0, -5);
+        this.scene.add(backLight);
+
+        this.fillLight = new THREE.PointLight(0xff0044, 0.0, 20); // Dynamic tension light
+        this.fillLight.position.set(0, -2, 4);
+        this.scene.add(this.fillLight);
     }
 
-    bind() {
-        const handle = (e) => {
-            e.preventDefault();
-            if(this.st.exp) return;
-            let cx, cy;
-            if(e.type.includes('mouse')) { cx = e.clientX; cy = e.clientY; }
-            else { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
-            this.hit(cx, cy);
+    loadFruit(type) {
+        if(this.targetObj) {
+            this.targetObj.geometry.dispose();
+            this.targetObj.material.dispose();
+            this.baseGroup.remove(this.targetObj);
+        }
+        
+        this.fruitModel = new ProceduralFruit(type);
+        this.targetObj = this.fruitModel.mesh;
+        this.baseGroup.add(this.targetObj);
+        
+        this.state.hits = 0;
+        this.state.mass = 0;
+        this.state.exploded = false;
+        this.state.type = type;
+        
+        this.baseGroup.position.set(0,0,0);
+        this.baseGroup.scale.set(1,1,1);
+        this.updateUI();
+    }
+
+    initInteraction() {
+        const handleHit = (x, y) => {
+            if(this.state.exploded) return;
+            
+            this.mouse.x = (x / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(y / window.innerHeight) * 2 + 1;
+            
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+            const intersects = this.raycaster.intersectObject(this.targetObj);
+            
+            if(intersects.length > 0) {
+                const hit = intersects[0];
+                this.executeDamage(hit);
+            }
         };
-        
-        const opt = { passive: false };
-        this.el.wrap.addEventListener('mousedown', handle, opt);
-        this.el.wrap.addEventListener('touchstart', handle, opt);
 
-        // Dynamic 3D lighting follows cursor
-        document.addEventListener('mousemove', (e) => {
-            if(this.st.exp) return;
-            const x = (e.clientX / window.innerWidth) * 100;
-            const y = (e.clientY / window.innerHeight) * 100;
-            this.el.wrap.style.setProperty('--light-x', `${x}%`);
-            this.el.wrap.style.setProperty('--light-y', `${y}%`);
-        });
+        const evOpt = { passive: false };
+        this.container.addEventListener('mousedown', (e) => { e.preventDefault(); handleHit(e.clientX, e.clientY); }, evOpt);
+        this.container.addEventListener('touchstart', (e) => { e.preventDefault(); handleHit(e.touches[0].clientX, e.touches[0].clientY); }, evOpt);
 
-        document.querySelectorAll('.btn-fruit').forEach(b => {
+        document.querySelectorAll('.btn').forEach(b => {
             b.addEventListener('click', (e) => {
-                document.querySelectorAll('.btn-fruit').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
                 e.target.classList.add('active');
-                this.switch(e.target.dataset.type);
+                this.loadFruit(e.target.dataset.type);
             });
         });
     }
 
-    hit(gx, gy) {
-        if(this.st.stage >= CFG.MAX_STAGE) return;
-        this.st.stage++;
-        const mat = MATERIALS[this.st.type];
+    executeDamage(hitData) {
+        if(this.state.hits >= this.state.maxHits) return;
+        this.state.hits++;
         
-        // Math
-        this.st.nrg += rand(10, 25) * mat.density;
+        const matData = FRUIT_DATA[this.state.type];
+        
+        // Physics logic
+        const impactMass = (Math.random()*0.05 + 0.02) * matData.density;
+        this.state.mass += impactMass;
         
         // Audio
-        SFX.playHit(this.st.stage, mat.density, mat.brittle);
+        audio.playHit(this.state.hits, matData.density);
         
-        // Visual Jolt Physics
-        this.el.wrap.classList.remove('anim-impact');
-        void this.el.wrap.offsetWidth;
-        const rect = this.el.wrap.getBoundingClientRect();
-        const cx = rect.left + rect.width/2;
-        const cy = rect.top + rect.height/2;
-        this.el.wrap.style.setProperty('--vec-x', `${(cx-gx)*0.15}px`);
-        this.el.wrap.style.setProperty('--vec-y', `${(cy-gy)*0.15}px`);
-        this.el.wrap.style.setProperty('--vec-r', `${rand(-8,8)}`);
-        this.el.wrap.classList.add('anim-impact');
+        // Apply procedural canvas damage map
+        if(hitData.uv) {
+            this.fruitModel.applyDamage(hitData.uv, this.state.hits);
+        }
 
-        // Light flash
-        this.el.light.style.background = `radial-gradient(circle at var(--light-x) var(--light-y), #fff 0%, transparent 80%)`;
-        setTimeout(() => this.el.light.style.background = '', 50);
+        // Spawn 3D Particles
+        const normal = hitData.face ? hitData.face.normal.clone().transformDirection(this.targetObj.matrixWorld) : new THREE.Vector3(0,0,1);
+        const emitCount = Math.floor(this.state.hits / 2) + 5;
+        this.particles.emit(hitData.point, normal, emitCount, false, matData.colorIn);
 
-        // Deformation
-        const lx = gx - rect.left;
-        const ly = gy - rect.top;
-        this.def.impact(lx, ly, this.st.stage, mat);
-        
-        // Particles
-        this.fx.emit(gx, gy, Math.floor(this.st.stage/2)+3, mat, false);
-        
-        this.updateHUD();
-        if(this.st.stage >= CFG.MAX_STAGE) this.explode();
-    }
+        // Mesh Jiggle Physics
+        const force = this.state.hits * 0.02;
+        this.baseGroup.position.set((Math.random()-0.5)*force, (Math.random()-0.5)*force, (Math.random()-0.5)*force - (force*2));
+        this.baseGroup.rotation.set((Math.random()-0.5)*force, (Math.random()-0.5)*force, (Math.random()-0.5)*force);
 
-    updateHUD() {
-        const pct = (this.st.stage / CFG.MAX_STAGE) * 100;
-        this.el.vStg.innerHTML = `${this.st.stage}<span style="font-size: 16px; color:#666;">/${CFG.MAX_STAGE}</span>`;
-        this.el.vInt.innerText = `${Math.max(0, 100-pct).toFixed(2)}%`;
-        this.el.vNrg.innerText = `${this.st.nrg.toFixed(2)} kJ`;
-        this.el.pBar.style.width = `${pct}%`;
+        // Lighting Tension
+        this.fillLight.intensity = (this.state.hits / this.state.maxHits) * 2.0;
 
-        if(pct > 75) {
-            this.el.wrap.classList.add('anim-critical');
-            document.documentElement.style.setProperty('--ui-accent', MATERIALS[this.st.type].color.in);
-        } else {
-            this.el.wrap.classList.remove('anim-critical');
-            document.documentElement.style.setProperty('--ui-accent', '#00ffcc');
+        this.updateUI();
+
+        if(this.state.hits >= this.state.maxHits) {
+            this.triggerExplosion();
         }
     }
 
-    explode() {
-        this.st.exp = true;
-        const mat = MATERIALS[this.st.type];
-        SFX.playExplosion();
+    triggerExplosion() {
+        this.state.exploded = true;
+        const matData = FRUIT_DATA[this.state.type];
         
-        this.el.flash.style.transition = 'none';
-        this.el.flash.style.opacity = '1';
-        this.el.flash.style.background = mat.color.core;
+        audio.playExplode();
+
+        // Screen Flash
+        this.ui.flash.style.transition = 'none';
+        this.ui.flash.style.opacity = '1';
+        this.ui.flash.style.background = '#' + matData.colorIn.toString(16).padStart(6, '0');
         setTimeout(() => {
-            this.el.flash.style.transition = 'opacity 2s ease-out';
-            this.el.flash.style.opacity = '0';
+            this.ui.flash.style.transition = 'opacity 2s ease-out';
+            this.ui.flash.style.opacity = '0';
         }, 50);
 
-        this.el.wrap.style.display = 'none';
+        // Hide Mesh
+        this.targetObj.visible = false;
+
+        // Massive Particle Burst
+        this.particles.emit(this.targetObj.position, new THREE.Vector3(0,1,0), 2000, true, matData.colorIn);
         
-        const rect = this.el.wrap.getBoundingClientRect();
-        this.fx.emit(rect.left+rect.width/2, rect.top+rect.height/2, 500, mat, true);
+        this.fillLight.intensity = 0;
+
+        // Auto Reset
+        setTimeout(() => {
+            this.loadFruit(this.state.type);
+        }, 3000);
+    }
+
+    updateUI() {
+        const pct = (this.state.hits / this.state.maxHits) * 100;
+        this.ui.stage.innerText = `${this.state.hits} / ${this.state.maxHits}`;
+        this.ui.mass.innerText = `${this.state.mass.toFixed(2)} kg`;
+        this.ui.pFill.style.width = `${pct}%`;
         
-        setTimeout(() => this.reset(), 3000);
+        if(pct > 80) document.documentElement.style.setProperty('--accent', '#' + FRUIT_DATA[this.state.type].colorIn.toString(16).padStart(6,'0'));
+        else document.documentElement.style.setProperty('--accent', '#ff0044');
     }
 
-    switch(type) {
-        if(this.st.stage>0 && !this.st.exp) this.fx.parts = [];
-        this.st.type = type;
-        this.reset();
+    onResize() {
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    reset() {
-        this.st.stage = 0; this.st.nrg = 0; this.st.exp = false;
-        this.el.wrap.style.display = 'block';
-        this.el.wrap.className = `model-${this.st.type}`;
-        this.el.wrap.classList.remove('anim-critical', 'anim-impact');
-        this.def.reset();
-        this.updateHUD();
-    }
+    render() {
+        const dt = this.clock.getDelta();
+        const time = this.clock.getElapsedTime();
 
-    loop() {
-        this.fx.tick();
-        requestAnimationFrame(() => this.loop());
+        // Idle floating/rotation
+        if(this.baseGroup && !this.state.exploded) {
+            // Restore position gradually from hits
+            this.baseGroup.position.lerp(new THREE.Vector3(0, Math.sin(time)*0.2, 0), 0.1);
+            this.baseGroup.rotation.y += 0.005;
+            // Restore rotation to upright gradually
+            this.baseGroup.rotation.x = THREE.MathUtils.lerp(this.baseGroup.rotation.x, 0, 0.1);
+            this.baseGroup.rotation.z = THREE.MathUtils.lerp(this.baseGroup.rotation.z, 0, 0.1);
+
+            // Critical state shuddering
+            if(this.state.hits > 40) {
+                const s = (this.state.hits - 40) * 0.005;
+                this.baseGroup.position.add(new THREE.Vector3((Math.random()-0.5)*s, (Math.random()-0.5)*s, (Math.random()-0.5)*s));
+            }
+        }
+
+        this.particles.update(dt);
+        this.renderer.render(this.scene, this.camera);
     }
 }
 
+// Boot Engine
 window.onload = () => {
     document.addEventListener('contextmenu', e => e.preventDefault());
-    window.App = new Game();
+    window.Engine = new Engine3D();
 };
 </script>
 </body>
