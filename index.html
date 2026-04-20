@@ -263,7 +263,7 @@ class ProceduralFruit {
             
             x+=(x/rad)*(n+jagged); y+=(y/rad)*(n+jagged); z+=(z/rad)*(n+jagged);
             pos.setXYZ(i, x, y, z);
-            if (this.type !== 'watermelon' && y > 1.5 && Math.abs(x) < 0.8 && Math.abs(z) < 0.8) { const sSeed = Math.sin(this.type.length * 1.5), sOff = (y - 1.5) * 0.8; pos.setXYZ(i, x * 0.1 + Math.cos(sSeed) * sOff, y + 0.6 + Math.sin(sOff * 2), z * 0.1 + Math.sin(sSeed) * sOff); if (i % 3 === 0) uvs.setXY(i, 0.1, 0.9); }
+            if (this.type !== 'watermelon' && y > 2.0) { const vDist = y - 2.0, vCurve = Math.sin(vDist * 5 + this.type.length), vSize = 0.15 / (1 + vDist); pos.setXYZ(i, x * vSize + vCurve * 0.3, y + vDist * 0.5 + Math.cos(vCurve) * 0.2, z * vSize + Math.cos(vDist * 5) * 0.2); if (y > 2.1) uvs.setXY(i, 0.5, 0.5); }
         }
         geo.computeVertexNormals(); return geo;
     }
