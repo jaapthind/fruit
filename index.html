@@ -315,6 +315,7 @@ class ChunkSystem {
     }
     
     build(fruit) {
+        this.hide(); // ADD THIS LINE: Ensures old chunks vanish before building new ones
         this.chunks.forEach(c => {
             c.mesh.geometry.dispose();
             this.scene.remove(c.mesh);
@@ -518,20 +519,33 @@ class Engine3D {
     }
 
     loadFruit(type) {
+        // 1. Cleanup old fruit and chunks
         if(this.fruitModel) {
-            this.fruitModel.geometry.dispose();
+            this.fruitModel.geo.dispose();
             this.fruitModel.mat.dispose();
             this.baseGroup.remove(this.fruitModel.mesh);
+            this.chunks.hide(); // Clear existing chunks
         }
         
+        // 2. Load the new fruit data
+        this.state.type = type;
         this.fruitModel = new ProceduralFruit(type);
+        
+        // 3. FORCE material refresh so the shader colors update
+        this.fruitModel.mat.needsUpdate = true;
+        
         this.baseGroup.add(this.fruitModel.mesh);
         
+        // 4. Rebuild the chunk system for the new geometry
         this.chunks.build(this.fruitModel);
         
-        this.state.hits = 0; this.state.mass = 0; this.state.exp = false; this.state.type = type;
+        // 5. Reset states
+        this.state.hits = 0; 
+        this.state.mass = 0; 
+        this.state.exp = false;
         this.fruitModel.mesh.visible = true;
-        this.baseGroup.position.set(0,0,0); this.baseGroup.rotation.set(0,0,0);
+        this.baseGroup.position.set(0,0,0); 
+        this.baseGroup.rotation.set(0,0,0);
         this.updateUI();
     }
 
@@ -551,9 +565,16 @@ class Engine3D {
         document.querySelectorAll('.btn').forEach(b => {
             b.addEventListener('click', (e) => {
                 if(this.state.introActive) return;
+                
+                // Ensure we get the button even if clicking the text inside
+                const target = e.currentTarget; 
+                
                 document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
-                e.target.classList.add('active');
-                this.loadFruit(e.target.dataset.type);
+                target.classList.add('active');
+                
+                // Clear the explosion state immediately if switching manually
+                this.state.exp = false; 
+                this.loadFruit(target.dataset.type);
             });
         });
     }
