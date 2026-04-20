@@ -263,7 +263,6 @@ class ProceduralFruit {
             
             x+=(x/rad)*(n+jagged); y+=(y/rad)*(n+jagged); z+=(z/rad)*(n+jagged);
             pos.setXYZ(i, x, y, z);
-            if (this.type !== 'watermelon' && y > 2.0) { const vDist = y - 2.0, vCurve = Math.sin(vDist * 5 + this.type.length), vSize = 0.15 / (1 + vDist); pos.setXYZ(i, x * vSize + vCurve * 0.3, y + vDist * 0.5 + Math.cos(vCurve) * 0.2, z * vSize + Math.cos(vDist * 5) * 0.2); if (y > 2.1) uvs.setXY(i, 0.5, 0.5); }
         }
         geo.computeVertexNormals(); return geo;
     }
@@ -468,6 +467,13 @@ class Engine3D {
         const floor = new THREE.Mesh(floorGeo, floorMat);
         floor.rotation.x = -Math.PI / 2; floor.position.y = -3; floor.receiveShadow = true;
         this.scene.add(floor);
+        // Add puddle logic
+        this.puddleGeo = new THREE.CircleGeometry(1, 32);
+        this.puddleMat = new THREE.MeshStandardMaterial({ color: 0xff0000, transparent: true, opacity: 0, roughness: 0.1 });
+        this.puddle = new THREE.Mesh(this.puddleGeo, this.puddleMat);
+        this.puddle.rotation.x = -Math.PI / 2;
+        this.puddle.position.y = -2.98; // Slightly above floor
+        this.scene.add(this.puddle);
 
         this.particles = new ParticleSystem(this.scene);
         this.chunks = new ChunkSystem(this.scene);
@@ -583,6 +589,23 @@ class Engine3D {
     doDamage(hit) {
         if(this.state.hits >= this.state.max) return;
         this.state.hits++;
+        // Impact Kickback (Camera)
+        this.camera.position.z += 0.2;
+        this.camera.fov += (this.state.hits / this.state.max) * 1.5;
+        this.camera.updateProjectionMatrix();
+        
+        // Number Ticker for Mass
+        const tickerTarget = this.state.mass;
+        let currentDisplay = parseFloat(this.ui.m.innerText) || 0;
+        const tickerInterval = setInterval(() => {
+            if (currentDisplay >= tickerTarget) {
+                this.ui.m.innerText = `${tickerTarget.toFixed(2)} kg`;
+                clearInterval(tickerInterval);
+            } else {
+                currentDisplay += 0.01;
+                this.ui.m.innerText = `${currentDisplay.toFixed(2)} kg`;
+            }
+        }, 16);
         const md = FRUIT_DATA[this.state.type];
         
         this.state.mass += (Math.random()*0.06+0.03) * md.dens;
@@ -652,6 +675,16 @@ class Engine3D {
         const dt = this.clock.getDelta(), t = this.clock.getElapsedTime();
 
         if(!this.state.exp && !this.state.introActive) {
+                    const md = FRUIT_DATA[this.state.type];
+        this.puddleMat.color.setHex(md.cIn);
+        const pScale = (this.state.hits / this.state.max) * 4.5;
+        this.puddle.scale.lerp(new THREE.Vector3(pScale, pScale, pScale), 0.1);
+        this.puddleMat.opacity = (this.state.hits / this.state.max) * 0.8;
+        
+        // Reset Camera Position (Smooth Lerp)
+        this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 14, 0.1);
+        this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, 45, 0.1);
+        this.camera.updateProjectionMatrix();
             this.baseGroup.position.lerp(new THREE.Vector3(0, Math.sin(t*2)*0.2, 0), 0.1);
             this.baseGroup.rotation.y += 0.005;
             this.baseGroup.rotation.x = THREE.MathUtils.lerp(this.baseGroup.rotation.x, 0, 0.1);
